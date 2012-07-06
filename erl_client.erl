@@ -6,7 +6,8 @@
 -import(erl_timer, [start/2]).
 
 start() ->
-	spawn(fun() -> player() end).
+	N = 200,
+	[ spawn(fun() -> player() end) || A <- lists:seq(1, N) ].
 
 player() ->
     player("localhost", 9527).
@@ -29,14 +30,14 @@ player(Host, Port) ->
 	Pid = self(),
 	erl_timer:start(3000,
 		fun() ->
-			io:format("send internal ping~n"),
+			%io:format("send internal ping~n"),
 			Pid ! ping
 		end),
 	spawn(
 		fun() ->
 			socket_loop(Pid, Socket)
 		end),
-	io:format("start loop~n"),
+	%io:format("start loop~n"),
 	loop(Socket, #player_info{
 		user_id = UserId,
 		player_id = PlayerId }, 0).
@@ -53,7 +54,7 @@ socket_loop(P, Socket) ->
 	socket_loop(P, Socket).
 
 loop(Socket, PlayerInfo, FrameNo) ->
-	io:format("in main loop~n"),
+	%io:format("in main loop~n"),
 	#player_info{
 		user_id = UserId,
 		player_id = PlayerId,
@@ -65,7 +66,7 @@ loop(Socket, PlayerInfo, FrameNo) ->
 				binary_to_list(erl_msg:write_msg(#msg_ping{data = FrameNo}))),
 			loop(Socket, PlayerInfo, FrameNo + 1);
 		move ->
-			io:format("in move~n"),
+			%io:format("in move~n"),
 			#pose{
 				x = X,
 				y = Y} = Pose,
@@ -85,7 +86,7 @@ loop(Socket, PlayerInfo, FrameNo) ->
 			x = X,
 			y = Y,
 			angle = Angle} ->
-			io:format("move ack(x=~p, y=~p, angle=~p)~n", [X, Y, Angle]),
+			%io:format("move ack(x=~p, y=~p, angle=~p)~n", [X, Y, Angle]),
 			PlayerInfo1 = #player_info{
 				user_id = UserId,
 				player_id = PlayerId,
@@ -102,7 +103,7 @@ loop(Socket, PlayerInfo, FrameNo) ->
 			x = X,
 			y = Y,
 			angle = Angle} ->
-			io:format("creature appear~n"),
+			%io:format("creature appear~n"),
 			PlayerInfo1 = #player_info{
 				user_id = UserId,
 				player_id = PlayerId,
@@ -113,11 +114,11 @@ loop(Socket, PlayerInfo, FrameNo) ->
 			Pid = self(),
 			erl_timer:start(250,
 				fun() ->
-					io:format("send internal move~n"),
+					%io:format("send internal move~n"),
 					Pid ! move
 				end),
 			loop(Socket, PlayerInfo1, FrameNo);
 		_ ->
-			io:format("unknown msg~n"),
+			%io:format("unknown msg~n"),
 			loop(Socket, PlayerInfo, FrameNo)
 	end.
