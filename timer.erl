@@ -1,4 +1,4 @@
--module(erl_timer).
+-module(timer).
 -export([start/2]).
 
 start(Time, Fun) -> spawn(fun() -> timer(Time, Fun) end).

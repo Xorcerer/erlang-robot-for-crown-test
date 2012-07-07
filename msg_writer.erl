@@ -1,4 +1,4 @@
--module(erl_msg_writer).
+-module(msg_writer).
 -compile(export_all).
 
 write_str(S) ->

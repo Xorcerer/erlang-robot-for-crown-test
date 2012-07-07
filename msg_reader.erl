@@ -1,4 +1,4 @@
--module(erl_msg_reader).
+-module(msg_reader).
 -compile(export_all).
 
 read_str(Buff) ->
