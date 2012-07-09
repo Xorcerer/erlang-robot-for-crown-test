@@ -7,7 +7,7 @@
 
 start() ->
 	N = 100,
-	[ spawn(fun() -> player() end) || _ <- lists:seq(1, N) ].
+	[ spawn(fun player/0) || _ <- lists:seq(1, N) ].
 
 player() ->
     player("localhost", 9527).
