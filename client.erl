@@ -4,18 +4,21 @@
 -include("playerInfo.hrl").
 -import(msg, [write_msg/1, read_msg/2]).
 -import(timer, [start/2]).
+-import(flags, [extract_str/2, extract_int/2]).
 
 start() ->
-	N = 100,
+	N = flags:extract_int(count, 100),
 	[ spawn(fun player/0) || _ <- lists:seq(1, N) ].
 
 player() ->
-    player("localhost", 9527).
+	Host = flags:extract_str(host, "localhost"),
+	Port = flags:extract_int(port, 9527),
+    player(Host, Port).
 
 player(Host, Port) ->
     {ok,Socket} = gen_tcp:connect(Host,Port,
 		[binary, {packet, 0}, {nodelay, true}, {active, false}]), %% (1)
-	UserId = 29921,
+	UserId = flags:extract_int(uid, 29921),
     ok = gen_tcp:send(Socket,
 		binary_to_list(msg:write_msg(#msg_Login{
 			sessionKey = "HELLO",
