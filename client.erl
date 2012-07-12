@@ -72,24 +72,28 @@ loop(Socket, PlayerInfo, FrameNo) ->
 			%io:format("in move~n"),
 			#pose{
 				x = X,
-				y = Y} = Pose,
-			DX = (random:uniform() - 0.5) * 250.0,
-			DY = (random:uniform() - 0.5) * 250.0,
-			X1 = X + DX,
-			Y1 = Y + DY,
-			Angle = math:atan2(DY, DX),
+				y = Y,
+				angle = Angle} = Pose,
+
+			Dist = random:uniform() * 250.0,
+			DAngle = (math:pow(random:uniform(), 0.5) - 0.5) * math:pi(),
+			Angle1 = Angle + DAngle,
+			X1 = X + Dist * math:cos(Angle1),
+			Y1 = Y + Dist * math:sin(Angle1),
+
 			ok = gen_tcp:send(Socket,
 				binary_to_list(msg:write_msg(#msg_Move{
 					state = 0,
 					x = X1,
 					y = Y1,
-					angle = Angle}))),
+					angle = Angle1}))),
 			loop(Socket, PlayerInfo, FrameNo);
-		#msg_MoveAck{
+		#msg_MoveNotif{
+			id = PlayerId,
 			x = X,
 			y = Y,
 			angle = Angle} ->
-			%io:format("move ack(x=~p, y=~p, angle=~p)~n", [X, Y, Angle]),
+			%io:format("move notif(x=~p, y=~p, angle=~p)~n", [X, Y, Angle]),
 			PlayerInfo1 = #playerInfo{
 				userId = UserId,
 				playerId = PlayerId,
