@@ -1,5 +1,5 @@
 -module(client).
--compile(export_all).
+-export([start/0]).
 -include("records.hrl").
 -include("playerInfo.hrl").
 -import(msg, [write_msg/1, read_msg/2]).
@@ -16,8 +16,8 @@ player() ->
     player(Host, Port).
 
 player(Host, Port) ->
-    {ok,Socket} = gen_tcp:connect(Host,Port,
-		[binary, {packet, 0}, {nodelay, true}, {active, false}]), %% (1)
+    {ok, Socket} = gen_tcp:connect(Host, Port,
+		[binary, {packet, 0}, {nodelay, true}, {active, false}]),
 	UserId = flags:extract_int(uid, 29921),
     ok = gen_tcp:send(Socket,
 		binary_to_list(msg:write_msg(#msg_Login{
@@ -26,7 +26,7 @@ player(Host, Port) ->
 			tableId = -1,
 			major = 0,
 			minor = 8,
-			revision = 0 }))),  %% (2)
+			revision = 0 }))),
 	{ok, <<?MSG_LoginAck:32, MsgLen:32>>} = gen_tcp:recv(Socket, 8),
 	{ok, Buff} = gen_tcp:recv(Socket, MsgLen),
 	#msg_LoginAck{errCode = 0, id = PlayerId} = msg:read_msg(Buff, ?MSG_LoginAck),

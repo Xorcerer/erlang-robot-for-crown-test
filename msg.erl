@@ -1,5 +1,5 @@
 -module(msg).
--compile(export_all).
+-export([write_msg/1, read_msg/2]).
 -include("records.hrl").
 -import(msg_reader, [read_str/1, read_byte/1, read_short/1, read_int/1, read_int1/1, read_single/1]).
 -import(msg_writer, [write_str/2, write_byte/2, write_short/2, write_int/2, write_single/2]).
