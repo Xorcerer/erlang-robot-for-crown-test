@@ -6,6 +6,7 @@
 	}).
 
 -record(pose, {
+	state,
 	x,
 	y,
 	angle
