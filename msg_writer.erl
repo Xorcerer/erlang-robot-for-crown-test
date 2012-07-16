@@ -8,6 +8,8 @@ write_byte(B) -> <<B:8>>.
 
 write_short(S) -> <<S:16>>.
 
-write_int(I) -> <<I:32>>.
+write_int(I) -> <<I:32/signed>>.
+
+write_uint(U) -> <<U:32>>.
 
 write_single(S) -> <<S:32/float>>.

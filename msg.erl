@@ -5,7 +5,7 @@
 -import(msg_writer, [write_str/2, write_byte/2, write_short/2, write_int/2, write_single/2]).
 
 write_msg(Msg) ->
-    { MsgId, Buff } =
+    {MsgId, Buff} =
         case Msg of
             #msg_Login{
                 sessionKey = SessionKey,
@@ -18,7 +18,7 @@ write_msg(Msg) ->
                     ?MSG_Login,
                     list_to_binary([
                         msg_writer:write_str(SessionKey),
-                        msg_writer:write_int(UserId),
+                        msg_writer:write_uint(UserId),
                         msg_writer:write_int(TableId),
                         msg_writer:write_int(Major),
                         msg_writer:write_int(Minor),
@@ -38,14 +38,14 @@ write_msg(Msg) ->
                 {
                     ?MSG_Ping,
                     list_to_binary([
-                        msg_writer:write_int(Data)])
+                        msg_writer:write_uint(Data)])
                 };
             #msg_PingAck{
                 data = Data} ->
                 {
                     ?MSG_PingAck,
                     list_to_binary([
-                        msg_writer:write_int(Data)])
+                        msg_writer:write_uint(Data)])
                 };
             #msg_Move{
                 state = State,
@@ -96,12 +96,12 @@ write_msg(Msg) ->
                 {
                     ?MSG_PropChangedIntNotif,
                     list_to_binary([
-                        msg_writer:write_int(Id),
+                        msg_writer:write_uint(Id),
                         msg_writer:write_int(PropertyId),
                         msg_writer:write_int(Value),
-                        msg_writer:write_int(SkillId),
-                        msg_writer:write_int(ModifierId),
-                        msg_writer:write_int(Arg1)])
+                        msg_writer:write_uint(SkillId),
+                        msg_writer:write_uint(ModifierId),
+                        msg_writer:write_uint(Arg1)])
                 };
             #msg_PropChangedUintNotif{
                 id = Id,
@@ -113,12 +113,12 @@ write_msg(Msg) ->
                 {
                     ?MSG_PropChangedUintNotif,
                     list_to_binary([
-                        msg_writer:write_int(Id),
+                        msg_writer:write_uint(Id),
                         msg_writer:write_int(PropertyId),
-                        msg_writer:write_int(Value),
-                        msg_writer:write_int(SkillId),
-                        msg_writer:write_int(ModifierId),
-                        msg_writer:write_int(Arg1)])
+                        msg_writer:write_uint(Value),
+                        msg_writer:write_uint(SkillId),
+                        msg_writer:write_uint(ModifierId),
+                        msg_writer:write_uint(Arg1)])
                 };
             #msg_PropChangedSingleNotif{
                 id = Id,
@@ -130,12 +130,12 @@ write_msg(Msg) ->
                 {
                     ?MSG_PropChangedSingleNotif,
                     list_to_binary([
-                        msg_writer:write_int(Id),
+                        msg_writer:write_uint(Id),
                         msg_writer:write_int(PropertyId),
                         msg_writer:write_single(Value),
-                        msg_writer:write_int(SkillId),
-                        msg_writer:write_int(ModifierId),
-                        msg_writer:write_int(Arg1)])
+                        msg_writer:write_uint(SkillId),
+                        msg_writer:write_uint(ModifierId),
+                        msg_writer:write_uint(Arg1)])
                 };
             #msg_ForceReposNotif{
                 id = Id,
@@ -148,20 +148,20 @@ write_msg(Msg) ->
                 {
                     ?MSG_ForceReposNotif,
                     list_to_binary([
-                        msg_writer:write_int(Id),
+                        msg_writer:write_uint(Id),
                         msg_writer:write_single(X),
                         msg_writer:write_single(Y),
                         msg_writer:write_single(Angle),
                         msg_writer:write_single(Speed),
-                        msg_writer:write_int(SkillId),
-                        msg_writer:write_int(ModifierId)])
+                        msg_writer:write_uint(SkillId),
+                        msg_writer:write_uint(ModifierId)])
                 };
             #msg_CreatureProps{
                 id = Id} ->
                 {
                     ?MSG_CreatureProps,
                     list_to_binary([
-                        msg_writer:write_int(Id)])
+                        msg_writer:write_uint(Id)])
                 };
             #msg_CreaturePropsAck{
                 id = Id,
@@ -197,7 +197,7 @@ write_msg(Msg) ->
                 {
                     ?MSG_CreaturePropsAck,
                     list_to_binary([
-                        msg_writer:write_int(Id),
+                        msg_writer:write_uint(Id),
                         msg_writer:write_str(Name),
                         msg_writer:write_int(Exp),
                         msg_writer:write_int(PreExp),
@@ -224,9 +224,9 @@ write_msg(Msg) ->
                         msg_writer:write_single(MovementSpeed),
                         msg_writer:write_single(AttackSpeed),
                         msg_writer:write_single(CooldownReduction),
-                        msg_writer:write_int(Gold),
-                        msg_writer:write_int(RMB),
-                        msg_writer:write_int(GM)])
+                        msg_writer:write_uint(Gold),
+                        msg_writer:write_uint(RMB),
+                        msg_writer:write_uint(GM)])
                 };
             #msg_JumpNotif{
                 id = Id,
@@ -236,7 +236,7 @@ write_msg(Msg) ->
                 {
                     ?MSG_JumpNotif,
                     list_to_binary([
-                        msg_writer:write_int(Id),
+                        msg_writer:write_uint(Id),
                         msg_writer:write_single(X),
                         msg_writer:write_single(Y),
                         msg_writer:write_single(Angle)])
@@ -266,9 +266,9 @@ write_msg(Msg) ->
                 {
                     ?MSG_SkillPropsNotif,
                     list_to_binary([
-                        msg_writer:write_int(Id),
-                        msg_writer:write_int(Class),
-                        msg_writer:write_int(Level),
+                        msg_writer:write_uint(Id),
+                        msg_writer:write_uint(Class),
+                        msg_writer:write_uint(Level),
                         msg_writer:write_single(PreCastTime),
                         msg_writer:write_single(CastTime),
                         msg_writer:write_single(CastingTime),
@@ -297,9 +297,9 @@ write_msg(Msg) ->
                 {
                     ?MSG_Casting,
                     list_to_binary([
-                        msg_writer:write_int(SkillId),
-                        msg_writer:write_int(SkillSeq),
-                        msg_writer:write_int(TargetId),
+                        msg_writer:write_uint(SkillId),
+                        msg_writer:write_uint(SkillSeq),
+                        msg_writer:write_uint(TargetId),
                         msg_writer:write_single(X),
                         msg_writer:write_single(Y)])
                 };
@@ -314,13 +314,13 @@ write_msg(Msg) ->
                 {
                     ?MSG_CastingNotif,
                     list_to_binary([
-                        msg_writer:write_int(SkillId),
-                        msg_writer:write_int(SkillSeq),
-                        msg_writer:write_int(PlayerId),
-                        msg_writer:write_int(TargetId),
+                        msg_writer:write_uint(SkillId),
+                        msg_writer:write_uint(SkillSeq),
+                        msg_writer:write_uint(PlayerId),
+                        msg_writer:write_uint(TargetId),
                         msg_writer:write_single(X),
                         msg_writer:write_single(Y),
-                        msg_writer:write_int(Lame)])
+                        msg_writer:write_uint(Lame)])
                 };
             #msg_CastedNotif{
                 skillId = SkillId,
@@ -331,10 +331,10 @@ write_msg(Msg) ->
                 {
                     ?MSG_CastedNotif,
                     list_to_binary([
-                        msg_writer:write_int(SkillId),
-                        msg_writer:write_int(SkillSeq),
-                        msg_writer:write_int(PlayerId),
-                        msg_writer:write_int(TargetId),
+                        msg_writer:write_uint(SkillId),
+                        msg_writer:write_uint(SkillSeq),
+                        msg_writer:write_uint(PlayerId),
+                        msg_writer:write_uint(TargetId),
                         msg_writer:write_byte(ResultId)])
                 };
             #msg_CastingAck{
@@ -344,9 +344,9 @@ write_msg(Msg) ->
                 {
                     ?MSG_CastingAck,
                     list_to_binary([
-                        msg_writer:write_int(SkillId),
-                        msg_writer:write_int(SkillSeq),
-                        msg_writer:write_int(ErrorId)])
+                        msg_writer:write_uint(SkillId),
+                        msg_writer:write_uint(SkillSeq),
+                        msg_writer:write_uint(ErrorId)])
                 };
             #msg_SkillCooldownNotif{
                 skillId = SkillId,
@@ -354,8 +354,8 @@ write_msg(Msg) ->
                 {
                     ?MSG_SkillCooldownNotif,
                     list_to_binary([
-                        msg_writer:write_int(SkillId),
-                        msg_writer:write_int(Cooldown)])
+                        msg_writer:write_uint(SkillId),
+                        msg_writer:write_uint(Cooldown)])
                 };
             #msg_CreatureAppearNotif{
                 type = Type,
@@ -385,12 +385,12 @@ write_msg(Msg) ->
                 {
                     ?MSG_CreatureAppearNotif,
                     list_to_binary([
-                        msg_writer:write_int(Type),
-                        msg_writer:write_int(Career),
+                        msg_writer:write_uint(Type),
+                        msg_writer:write_uint(Career),
                         msg_writer:write_byte(Gender),
                         msg_writer:write_str(Name),
-                        msg_writer:write_int(Id),
-                        msg_writer:write_int(UserId),
+                        msg_writer:write_uint(Id),
+                        msg_writer:write_uint(UserId),
                         msg_writer:write_single(X),
                         msg_writer:write_single(Y),
                         msg_writer:write_single(Angle),
@@ -407,7 +407,7 @@ write_msg(Msg) ->
                         msg_writer:write_int(MonsterClass),
                         msg_writer:write_int(TableId),
                         msg_writer:write_int(State),
-                        msg_writer:write_int(Level),
+                        msg_writer:write_uint(Level),
                         msg_writer:write_byte(IsBuilding)])
                 };
             #msg_CreatureDisappearNotif{
@@ -415,7 +415,7 @@ write_msg(Msg) ->
                 {
                     ?MSG_CreatureDisappearNotif,
                     list_to_binary([
-                        msg_writer:write_int(Id)])
+                        msg_writer:write_uint(Id)])
                 };
             #msg_CreatureOnNotif{
                 name = Name,
@@ -424,14 +424,14 @@ write_msg(Msg) ->
                     ?MSG_CreatureOnNotif,
                     list_to_binary([
                         msg_writer:write_str(Name),
-                        msg_writer:write_int(Id)])
+                        msg_writer:write_uint(Id)])
                 };
             #msg_CreatureOffNotif{
                 id = Id} ->
                 {
                     ?MSG_CreatureOffNotif,
                     list_to_binary([
-                        msg_writer:write_int(Id)])
+                        msg_writer:write_uint(Id)])
                 };
             #msg_OperatorAppearNotif{
                 id = Id,
@@ -445,21 +445,21 @@ write_msg(Msg) ->
                 {
                     ?MSG_OperatorAppearNotif,
                     list_to_binary([
-                        msg_writer:write_int(Id),
+                        msg_writer:write_uint(Id),
                         msg_writer:write_int(Type),
                         msg_writer:write_single(X),
                         msg_writer:write_single(Y),
                         msg_writer:write_single(Angle),
                         msg_writer:write_int(SubType),
-                        msg_writer:write_int(Arg1),
-                        msg_writer:write_int(Arg2)])
+                        msg_writer:write_uint(Arg1),
+                        msg_writer:write_uint(Arg2)])
                 };
             #msg_OperatorDisappearNotif{
                 id = Id} ->
                 {
                     ?MSG_OperatorDisappearNotif,
                     list_to_binary([
-                        msg_writer:write_int(Id)])
+                        msg_writer:write_uint(Id)])
                 };
             #msg_AddBuffNotif{
                 playerId = PlayerId,
@@ -469,10 +469,10 @@ write_msg(Msg) ->
                 {
                     ?MSG_AddBuffNotif,
                     list_to_binary([
-                        msg_writer:write_int(PlayerId),
-                        msg_writer:write_int(BuffId),
+                        msg_writer:write_uint(PlayerId),
+                        msg_writer:write_uint(BuffId),
                         msg_writer:write_int(BuffLevel),
-                        msg_writer:write_int(BuffTime)])
+                        msg_writer:write_uint(BuffTime)])
                 };
             #msg_UpdateBuffNotif{
                 playerId = PlayerId,
@@ -482,10 +482,10 @@ write_msg(Msg) ->
                 {
                     ?MSG_UpdateBuffNotif,
                     list_to_binary([
-                        msg_writer:write_int(PlayerId),
-                        msg_writer:write_int(BuffId),
+                        msg_writer:write_uint(PlayerId),
+                        msg_writer:write_uint(BuffId),
                         msg_writer:write_int(BuffLevel),
-                        msg_writer:write_int(BuffTime)])
+                        msg_writer:write_uint(BuffTime)])
                 };
             #msg_DelBuffNotif{
                 playerId = PlayerId,
@@ -493,8 +493,8 @@ write_msg(Msg) ->
                 {
                     ?MSG_DelBuffNotif,
                     list_to_binary([
-                        msg_writer:write_int(PlayerId),
-                        msg_writer:write_int(BuffId)])
+                        msg_writer:write_uint(PlayerId),
+                        msg_writer:write_uint(BuffId)])
                 };
             #msg_MoveEquip{
                 sourceOwnerId = SourceOwnerId,
@@ -503,7 +503,7 @@ write_msg(Msg) ->
                 {
                     ?MSG_MoveEquip,
                     list_to_binary([
-                        msg_writer:write_int(SourceOwnerId),
+                        msg_writer:write_uint(SourceOwnerId),
                         msg_writer:write_byte(PositionFrom),
                         msg_writer:write_byte(PositionTo)])
                 };
@@ -522,7 +522,7 @@ write_msg(Msg) ->
                 {
                     ?MSG_MoveEquipAck,
                     list_to_binary([
-                        msg_writer:write_int(ErrorId),
+                        msg_writer:write_uint(ErrorId),
                         msg_writer:write_str(EquipmentId),
                         msg_writer:write_str(IconId),
                         msg_writer:write_str(EquipmentRes),
@@ -531,7 +531,7 @@ write_msg(Msg) ->
                         msg_writer:write_int(Count),
                         msg_writer:write_str(EquipmentType),
                         msg_writer:write_str(Grade),
-                        msg_writer:write_int(TemplateId),
+                        msg_writer:write_uint(TemplateId),
                         msg_writer:write_int(Special)])
                 };
             #msg_MoveEquipNotif{
@@ -549,7 +549,7 @@ write_msg(Msg) ->
                 {
                     ?MSG_MoveEquipNotif,
                     list_to_binary([
-                        msg_writer:write_int(OwnerId),
+                        msg_writer:write_uint(OwnerId),
                         msg_writer:write_str(EquipmentId),
                         msg_writer:write_str(IconId),
                         msg_writer:write_str(EquipmentRes),
@@ -558,7 +558,7 @@ write_msg(Msg) ->
                         msg_writer:write_int(Count),
                         msg_writer:write_str(EquipmentType),
                         msg_writer:write_str(Grade),
-                        msg_writer:write_int(TemplateId),
+                        msg_writer:write_uint(TemplateId),
                         msg_writer:write_int(Special)])
                 };
             #msg_DropEquip{
@@ -575,7 +575,7 @@ write_msg(Msg) ->
                     ?MSG_DropEquipAck,
                     list_to_binary([
                         msg_writer:write_byte(Position),
-                        msg_writer:write_int(ErrorId)])
+                        msg_writer:write_uint(ErrorId)])
                 };
             #msg_UpdatedEquipNotif{
                 ownerId = OwnerId,
@@ -592,7 +592,7 @@ write_msg(Msg) ->
                 {
                     ?MSG_UpdatedEquipNotif,
                     list_to_binary([
-                        msg_writer:write_int(OwnerId),
+                        msg_writer:write_uint(OwnerId),
                         msg_writer:write_str(EquipmentId),
                         msg_writer:write_str(IconId),
                         msg_writer:write_str(EquipmentRes),
@@ -601,7 +601,7 @@ write_msg(Msg) ->
                         msg_writer:write_int(Count),
                         msg_writer:write_str(EquipmentType),
                         msg_writer:write_str(Grade),
-                        msg_writer:write_int(TemplateId),
+                        msg_writer:write_uint(TemplateId),
                         msg_writer:write_int(Special)])
                 };
             #msg_ListEquip{
@@ -611,7 +611,7 @@ write_msg(Msg) ->
                 {
                     ?MSG_ListEquip,
                     list_to_binary([
-                        msg_writer:write_int(OwnerId),
+                        msg_writer:write_uint(OwnerId),
                         msg_writer:write_byte(Bag),
                         msg_writer:write_byte(Equipment)])
                 };
@@ -630,7 +630,7 @@ write_msg(Msg) ->
                 {
                     ?MSG_ListEquipAck,
                     list_to_binary([
-                        msg_writer:write_int(OwnerId),
+                        msg_writer:write_uint(OwnerId),
                         msg_writer:write_str(EquipmentId),
                         msg_writer:write_str(IconId),
                         msg_writer:write_str(EquipmentRes),
@@ -639,7 +639,7 @@ write_msg(Msg) ->
                         msg_writer:write_int(Count),
                         msg_writer:write_str(EquipmentType),
                         msg_writer:write_str(Grade),
-                        msg_writer:write_int(TemplateId),
+                        msg_writer:write_uint(TemplateId),
                         msg_writer:write_int(Special)])
                 };
             #msg_ListEquipNotif{
@@ -657,7 +657,7 @@ write_msg(Msg) ->
                 {
                     ?MSG_ListEquipNotif,
                     list_to_binary([
-                        msg_writer:write_int(OwnerId),
+                        msg_writer:write_uint(OwnerId),
                         msg_writer:write_str(EquipmentId),
                         msg_writer:write_str(IconId),
                         msg_writer:write_str(EquipmentRes),
@@ -666,7 +666,7 @@ write_msg(Msg) ->
                         msg_writer:write_int(Count),
                         msg_writer:write_str(EquipmentType),
                         msg_writer:write_str(Grade),
-                        msg_writer:write_int(TemplateId),
+                        msg_writer:write_uint(TemplateId),
                         msg_writer:write_int(Special)])
                 };
             #msg_SimpleMessageNotif{
@@ -674,7 +674,7 @@ write_msg(Msg) ->
                 {
                     ?MSG_SimpleMessageNotif,
                     list_to_binary([
-                        msg_writer:write_int(N)])
+                        msg_writer:write_uint(N)])
                 };
             #msg_Command{
                 clientSideId = ClientSideId,
@@ -682,7 +682,7 @@ write_msg(Msg) ->
                 {
                     ?MSG_Command,
                     list_to_binary([
-                        msg_writer:write_int(ClientSideId),
+                        msg_writer:write_uint(ClientSideId),
                         msg_writer:write_str(Command)])
                 };
             #msg_CommandAck{
@@ -691,7 +691,7 @@ write_msg(Msg) ->
                 {
                     ?MSG_CommandAck,
                     list_to_binary([
-                        msg_writer:write_int(ClientSideId),
+                        msg_writer:write_uint(ClientSideId),
                         msg_writer:write_str(Result)])
                 };
             #msg_Task{
@@ -700,8 +700,8 @@ write_msg(Msg) ->
                 {
                     ?MSG_Task,
                     list_to_binary([
-                        msg_writer:write_int(TaskId),
-                        msg_writer:write_int(TaskState)])
+                        msg_writer:write_uint(TaskId),
+                        msg_writer:write_uint(TaskState)])
                 };
             #msg_ChangeTable{
                 tableId = TableId} ->
@@ -722,7 +722,7 @@ write_msg(Msg) ->
                 {
                     ?MSG_AssignLeader,
                     list_to_binary([
-                        msg_writer:write_int(NewLeaderId)])
+                        msg_writer:write_uint(NewLeaderId)])
                 };
             #msg_AssignLeaderAck{
                 resultId = ResultId} ->
@@ -743,7 +743,7 @@ write_msg(Msg) ->
                 {
                     ?MSG_WinnerNotif,
                     list_to_binary([
-                        msg_writer:write_int(ForceId)])
+                        msg_writer:write_uint(ForceId)])
                 };
             #msg_SpeakNotif{
                 speakerId = SpeakerId,
@@ -751,7 +751,7 @@ write_msg(Msg) ->
                 {
                     ?MSG_SpeakNotif,
                     list_to_binary([
-                        msg_writer:write_int(SpeakerId),
+                        msg_writer:write_uint(SpeakerId),
                         msg_writer:write_str(Content)])
                 };
             #msg_Talk{
@@ -759,7 +759,7 @@ write_msg(Msg) ->
                 {
                     ?MSG_Talk,
                     list_to_binary([
-                        msg_writer:write_int(TargetId)])
+                        msg_writer:write_uint(TargetId)])
                 };
             #msg_TalkAck{
                 resultId = ResultId} ->
@@ -777,12 +777,12 @@ write_msg(Msg) ->
 read_msg(Buff, MsgId) ->
     case MsgId of
         ?MSG_Login ->
-            { SessionKey, Buff1 } = msg_reader:read_str(Buff),
-            { UserId, Buff2 } = msg_reader:read_int(Buff1),
-            { TableId, Buff3 } = msg_reader:read_int(Buff2),
-            { Major, Buff4 } = msg_reader:read_int(Buff3),
-            { Minor, Buff5 } = msg_reader:read_int(Buff4),
-            { Revision, _ } = msg_reader:read_int(Buff5),
+            {SessionKey, Buff1} = msg_reader:read_str(Buff),
+            {UserId, Buff2} = msg_reader:read_uint(Buff1),
+            {TableId, Buff3} = msg_reader:read_int(Buff2),
+            {Major, Buff4} = msg_reader:read_int(Buff3),
+            {Minor, Buff5} = msg_reader:read_int(Buff4),
+            {Revision, _} = msg_reader:read_int(Buff5),
             #msg_Login{
                 sessionKey = SessionKey,
                 userId = UserId,
@@ -791,35 +791,35 @@ read_msg(Buff, MsgId) ->
                 minor = Minor,
                 revision = Revision};
         ?MSG_LoginAck ->
-            { ErrCode, Buff1 } = msg_reader:read_int(Buff),
-            { Id, _ } = msg_reader:read_int(Buff1),
+            {ErrCode, Buff1} = msg_reader:read_int(Buff),
+            {Id, _} = msg_reader:read_int(Buff1),
             #msg_LoginAck{
                 errCode = ErrCode,
                 id = Id};
         ?MSG_Ping ->
-            { Data, _ } = msg_reader:read_int(Buff),
+            {Data, _} = msg_reader:read_uint(Buff),
             #msg_Ping{
                 data = Data};
         ?MSG_PingAck ->
-            { Data, _ } = msg_reader:read_int(Buff),
+            {Data, _} = msg_reader:read_uint(Buff),
             #msg_PingAck{
                 data = Data};
         ?MSG_Move ->
-            { State, Buff1 } = msg_reader:read_int(Buff),
-            { X, Buff2 } = msg_reader:read_single(Buff1),
-            { Y, Buff3 } = msg_reader:read_single(Buff2),
-            { Angle, _ } = msg_reader:read_single(Buff3),
+            {State, Buff1} = msg_reader:read_int(Buff),
+            {X, Buff2} = msg_reader:read_single(Buff1),
+            {Y, Buff3} = msg_reader:read_single(Buff2),
+            {Angle, _} = msg_reader:read_single(Buff3),
             #msg_Move{
                 state = State,
                 x = X,
                 y = Y,
                 angle = Angle};
         ?MSG_MoveNotif ->
-            { Id, Buff1 } = msg_reader:read_int(Buff),
-            { State, Buff2 } = msg_reader:read_int(Buff1),
-            { X, Buff3 } = msg_reader:read_single(Buff2),
-            { Y, Buff4 } = msg_reader:read_single(Buff3),
-            { Angle, _ } = msg_reader:read_single(Buff4),
+            {Id, Buff1} = msg_reader:read_int(Buff),
+            {State, Buff2} = msg_reader:read_int(Buff1),
+            {X, Buff3} = msg_reader:read_single(Buff2),
+            {Y, Buff4} = msg_reader:read_single(Buff3),
+            {Angle, _} = msg_reader:read_single(Buff4),
             #msg_MoveNotif{
                 id = Id,
                 state = State,
@@ -827,20 +827,20 @@ read_msg(Buff, MsgId) ->
                 y = Y,
                 angle = Angle};
         ?MSG_MoveAck ->
-            { X, Buff1 } = msg_reader:read_single(Buff),
-            { Y, Buff2 } = msg_reader:read_single(Buff1),
-            { Angle, _ } = msg_reader:read_single(Buff2),
+            {X, Buff1} = msg_reader:read_single(Buff),
+            {Y, Buff2} = msg_reader:read_single(Buff1),
+            {Angle, _} = msg_reader:read_single(Buff2),
             #msg_MoveAck{
                 x = X,
                 y = Y,
                 angle = Angle};
         ?MSG_PropChangedIntNotif ->
-            { Id, Buff1 } = msg_reader:read_int(Buff),
-            { PropertyId, Buff2 } = msg_reader:read_int(Buff1),
-            { Value, Buff3 } = msg_reader:read_int(Buff2),
-            { SkillId, Buff4 } = msg_reader:read_int(Buff3),
-            { ModifierId, Buff5 } = msg_reader:read_int(Buff4),
-            { Arg1, _ } = msg_reader:read_int(Buff5),
+            {Id, Buff1} = msg_reader:read_uint(Buff),
+            {PropertyId, Buff2} = msg_reader:read_int(Buff1),
+            {Value, Buff3} = msg_reader:read_int(Buff2),
+            {SkillId, Buff4} = msg_reader:read_uint(Buff3),
+            {ModifierId, Buff5} = msg_reader:read_uint(Buff4),
+            {Arg1, _} = msg_reader:read_uint(Buff5),
             #msg_PropChangedIntNotif{
                 id = Id,
                 propertyId = PropertyId,
@@ -849,12 +849,12 @@ read_msg(Buff, MsgId) ->
                 modifierId = ModifierId,
                 arg1 = Arg1};
         ?MSG_PropChangedUintNotif ->
-            { Id, Buff1 } = msg_reader:read_int(Buff),
-            { PropertyId, Buff2 } = msg_reader:read_int(Buff1),
-            { Value, Buff3 } = msg_reader:read_int(Buff2),
-            { SkillId, Buff4 } = msg_reader:read_int(Buff3),
-            { ModifierId, Buff5 } = msg_reader:read_int(Buff4),
-            { Arg1, _ } = msg_reader:read_int(Buff5),
+            {Id, Buff1} = msg_reader:read_uint(Buff),
+            {PropertyId, Buff2} = msg_reader:read_int(Buff1),
+            {Value, Buff3} = msg_reader:read_uint(Buff2),
+            {SkillId, Buff4} = msg_reader:read_uint(Buff3),
+            {ModifierId, Buff5} = msg_reader:read_uint(Buff4),
+            {Arg1, _} = msg_reader:read_uint(Buff5),
             #msg_PropChangedUintNotif{
                 id = Id,
                 propertyId = PropertyId,
@@ -863,12 +863,12 @@ read_msg(Buff, MsgId) ->
                 modifierId = ModifierId,
                 arg1 = Arg1};
         ?MSG_PropChangedSingleNotif ->
-            { Id, Buff1 } = msg_reader:read_int(Buff),
-            { PropertyId, Buff2 } = msg_reader:read_int(Buff1),
-            { Value, Buff3 } = msg_reader:read_single(Buff2),
-            { SkillId, Buff4 } = msg_reader:read_int(Buff3),
-            { ModifierId, Buff5 } = msg_reader:read_int(Buff4),
-            { Arg1, _ } = msg_reader:read_int(Buff5),
+            {Id, Buff1} = msg_reader:read_uint(Buff),
+            {PropertyId, Buff2} = msg_reader:read_int(Buff1),
+            {Value, Buff3} = msg_reader:read_single(Buff2),
+            {SkillId, Buff4} = msg_reader:read_uint(Buff3),
+            {ModifierId, Buff5} = msg_reader:read_uint(Buff4),
+            {Arg1, _} = msg_reader:read_uint(Buff5),
             #msg_PropChangedSingleNotif{
                 id = Id,
                 propertyId = PropertyId,
@@ -877,13 +877,13 @@ read_msg(Buff, MsgId) ->
                 modifierId = ModifierId,
                 arg1 = Arg1};
         ?MSG_ForceReposNotif ->
-            { Id, Buff1 } = msg_reader:read_int(Buff),
-            { X, Buff2 } = msg_reader:read_single(Buff1),
-            { Y, Buff3 } = msg_reader:read_single(Buff2),
-            { Angle, Buff4 } = msg_reader:read_single(Buff3),
-            { Speed, Buff5 } = msg_reader:read_single(Buff4),
-            { SkillId, Buff6 } = msg_reader:read_int(Buff5),
-            { ModifierId, _ } = msg_reader:read_int(Buff6),
+            {Id, Buff1} = msg_reader:read_uint(Buff),
+            {X, Buff2} = msg_reader:read_single(Buff1),
+            {Y, Buff3} = msg_reader:read_single(Buff2),
+            {Angle, Buff4} = msg_reader:read_single(Buff3),
+            {Speed, Buff5} = msg_reader:read_single(Buff4),
+            {SkillId, Buff6} = msg_reader:read_uint(Buff5),
+            {ModifierId, _} = msg_reader:read_uint(Buff6),
             #msg_ForceReposNotif{
                 id = Id,
                 x = X,
@@ -893,40 +893,40 @@ read_msg(Buff, MsgId) ->
                 skillId = SkillId,
                 modifierId = ModifierId};
         ?MSG_CreatureProps ->
-            { Id, _ } = msg_reader:read_int(Buff),
+            {Id, _} = msg_reader:read_uint(Buff),
             #msg_CreatureProps{
                 id = Id};
         ?MSG_CreaturePropsAck ->
-            { Id, Buff1 } = msg_reader:read_int(Buff),
-            { Name, Buff2 } = msg_reader:read_str(Buff1),
-            { Exp, Buff3 } = msg_reader:read_int(Buff2),
-            { PreExp, Buff4 } = msg_reader:read_int(Buff3),
-            { NextExp, Buff5 } = msg_reader:read_int(Buff4),
-            { Level, Buff6 } = msg_reader:read_int(Buff5),
-            { Hp, Buff7 } = msg_reader:read_single(Buff6),
-            { Mp, Buff8 } = msg_reader:read_single(Buff7),
-            { Health, Buff9 } = msg_reader:read_single(Buff8),
-            { HealthRegeneration, Buff10 } = msg_reader:read_single(Buff9),
-            { Mana, Buff11 } = msg_reader:read_single(Buff10),
-            { ManaRegeneration, Buff12 } = msg_reader:read_single(Buff11),
-            { AttackDamage, Buff13 } = msg_reader:read_single(Buff12),
-            { AbilityPower, Buff14 } = msg_reader:read_single(Buff13),
-            { Armor, Buff15 } = msg_reader:read_single(Buff14),
-            { ArmorPenetration, Buff16 } = msg_reader:read_single(Buff15),
-            { MagicResistance, Buff17 } = msg_reader:read_single(Buff16),
-            { MagicPenetration, Buff18 } = msg_reader:read_single(Buff17),
-            { CriticalStrikeChance, Buff19 } = msg_reader:read_single(Buff18),
-            { CriticalStrikeDamage, Buff20 } = msg_reader:read_single(Buff19),
-            { LifeSteal, Buff21 } = msg_reader:read_single(Buff20),
-            { SpellVamp, Buff22 } = msg_reader:read_single(Buff21),
-            { Tenacity, Buff23 } = msg_reader:read_single(Buff22),
-            { Range, Buff24 } = msg_reader:read_single(Buff23),
-            { MovementSpeed, Buff25 } = msg_reader:read_single(Buff24),
-            { AttackSpeed, Buff26 } = msg_reader:read_single(Buff25),
-            { CooldownReduction, Buff27 } = msg_reader:read_single(Buff26),
-            { Gold, Buff28 } = msg_reader:read_int(Buff27),
-            { RMB, Buff29 } = msg_reader:read_int(Buff28),
-            { GM, _ } = msg_reader:read_int(Buff29),
+            {Id, Buff1} = msg_reader:read_uint(Buff),
+            {Name, Buff2} = msg_reader:read_str(Buff1),
+            {Exp, Buff3} = msg_reader:read_int(Buff2),
+            {PreExp, Buff4} = msg_reader:read_int(Buff3),
+            {NextExp, Buff5} = msg_reader:read_int(Buff4),
+            {Level, Buff6} = msg_reader:read_int(Buff5),
+            {Hp, Buff7} = msg_reader:read_single(Buff6),
+            {Mp, Buff8} = msg_reader:read_single(Buff7),
+            {Health, Buff9} = msg_reader:read_single(Buff8),
+            {HealthRegeneration, Buff10} = msg_reader:read_single(Buff9),
+            {Mana, Buff11} = msg_reader:read_single(Buff10),
+            {ManaRegeneration, Buff12} = msg_reader:read_single(Buff11),
+            {AttackDamage, Buff13} = msg_reader:read_single(Buff12),
+            {AbilityPower, Buff14} = msg_reader:read_single(Buff13),
+            {Armor, Buff15} = msg_reader:read_single(Buff14),
+            {ArmorPenetration, Buff16} = msg_reader:read_single(Buff15),
+            {MagicResistance, Buff17} = msg_reader:read_single(Buff16),
+            {MagicPenetration, Buff18} = msg_reader:read_single(Buff17),
+            {CriticalStrikeChance, Buff19} = msg_reader:read_single(Buff18),
+            {CriticalStrikeDamage, Buff20} = msg_reader:read_single(Buff19),
+            {LifeSteal, Buff21} = msg_reader:read_single(Buff20),
+            {SpellVamp, Buff22} = msg_reader:read_single(Buff21),
+            {Tenacity, Buff23} = msg_reader:read_single(Buff22),
+            {Range, Buff24} = msg_reader:read_single(Buff23),
+            {MovementSpeed, Buff25} = msg_reader:read_single(Buff24),
+            {AttackSpeed, Buff26} = msg_reader:read_single(Buff25),
+            {CooldownReduction, Buff27} = msg_reader:read_single(Buff26),
+            {Gold, Buff28} = msg_reader:read_uint(Buff27),
+            {RMB, Buff29} = msg_reader:read_uint(Buff28),
+            {GM, _} = msg_reader:read_uint(Buff29),
             #msg_CreaturePropsAck{
                 id = Id,
                 name = Name,
@@ -959,37 +959,37 @@ read_msg(Buff, MsgId) ->
                 rMB = RMB,
                 gM = GM};
         ?MSG_JumpNotif ->
-            { Id, Buff1 } = msg_reader:read_int(Buff),
-            { X, Buff2 } = msg_reader:read_single(Buff1),
-            { Y, Buff3 } = msg_reader:read_single(Buff2),
-            { Angle, _ } = msg_reader:read_single(Buff3),
+            {Id, Buff1} = msg_reader:read_uint(Buff),
+            {X, Buff2} = msg_reader:read_single(Buff1),
+            {Y, Buff3} = msg_reader:read_single(Buff2),
+            {Angle, _} = msg_reader:read_single(Buff3),
             #msg_JumpNotif{
                 id = Id,
                 x = X,
                 y = Y,
                 angle = Angle};
         ?MSG_SkillPropsNotif ->
-            { Id, Buff1 } = msg_reader:read_int(Buff),
-            { Class, Buff2 } = msg_reader:read_int(Buff1),
-            { Level, Buff3 } = msg_reader:read_int(Buff2),
-            { PreCastTime, Buff4 } = msg_reader:read_single(Buff3),
-            { CastTime, Buff5 } = msg_reader:read_single(Buff4),
-            { CastingTime, Buff6 } = msg_reader:read_single(Buff5),
-            { Cooldown, Buff7 } = msg_reader:read_single(Buff6),
-            { Range, Buff8 } = msg_reader:read_single(Buff7),
-            { SmallCD, Buff9 } = msg_reader:read_single(Buff8),
-            { MiddleCD, Buff10 } = msg_reader:read_single(Buff9),
-            { BigCD, Buff11 } = msg_reader:read_single(Buff10),
-            { MP, Buff12 } = msg_reader:read_int(Buff11),
-            { AttackMin, Buff13 } = msg_reader:read_int(Buff12),
-            { AttackMax, Buff14 } = msg_reader:read_int(Buff13),
-            { MagicAttackMin, Buff15 } = msg_reader:read_int(Buff14),
-            { MagicAttackMax, Buff16 } = msg_reader:read_int(Buff15),
-            { Damage, Buff17 } = msg_reader:read_int(Buff16),
-            { Arg1, Buff18 } = msg_reader:read_single(Buff17),
-            { Arg2, Buff19 } = msg_reader:read_single(Buff18),
-            { Arg3, Buff20 } = msg_reader:read_single(Buff19),
-            { Arg4, _ } = msg_reader:read_single(Buff20),
+            {Id, Buff1} = msg_reader:read_uint(Buff),
+            {Class, Buff2} = msg_reader:read_uint(Buff1),
+            {Level, Buff3} = msg_reader:read_uint(Buff2),
+            {PreCastTime, Buff4} = msg_reader:read_single(Buff3),
+            {CastTime, Buff5} = msg_reader:read_single(Buff4),
+            {CastingTime, Buff6} = msg_reader:read_single(Buff5),
+            {Cooldown, Buff7} = msg_reader:read_single(Buff6),
+            {Range, Buff8} = msg_reader:read_single(Buff7),
+            {SmallCD, Buff9} = msg_reader:read_single(Buff8),
+            {MiddleCD, Buff10} = msg_reader:read_single(Buff9),
+            {BigCD, Buff11} = msg_reader:read_single(Buff10),
+            {MP, Buff12} = msg_reader:read_int(Buff11),
+            {AttackMin, Buff13} = msg_reader:read_int(Buff12),
+            {AttackMax, Buff14} = msg_reader:read_int(Buff13),
+            {MagicAttackMin, Buff15} = msg_reader:read_int(Buff14),
+            {MagicAttackMax, Buff16} = msg_reader:read_int(Buff15),
+            {Damage, Buff17} = msg_reader:read_int(Buff16),
+            {Arg1, Buff18} = msg_reader:read_single(Buff17),
+            {Arg2, Buff19} = msg_reader:read_single(Buff18),
+            {Arg3, Buff20} = msg_reader:read_single(Buff19),
+            {Arg4, _} = msg_reader:read_single(Buff20),
             #msg_SkillPropsNotif{
                 id = Id,
                 class = Class,
@@ -1013,11 +1013,11 @@ read_msg(Buff, MsgId) ->
                 arg3 = Arg3,
                 arg4 = Arg4};
         ?MSG_Casting ->
-            { SkillId, Buff1 } = msg_reader:read_int(Buff),
-            { SkillSeq, Buff2 } = msg_reader:read_int(Buff1),
-            { TargetId, Buff3 } = msg_reader:read_int(Buff2),
-            { X, Buff4 } = msg_reader:read_single(Buff3),
-            { Y, _ } = msg_reader:read_single(Buff4),
+            {SkillId, Buff1} = msg_reader:read_uint(Buff),
+            {SkillSeq, Buff2} = msg_reader:read_uint(Buff1),
+            {TargetId, Buff3} = msg_reader:read_uint(Buff2),
+            {X, Buff4} = msg_reader:read_single(Buff3),
+            {Y, _} = msg_reader:read_single(Buff4),
             #msg_Casting{
                 skillId = SkillId,
                 skillSeq = SkillSeq,
@@ -1025,13 +1025,13 @@ read_msg(Buff, MsgId) ->
                 x = X,
                 y = Y};
         ?MSG_CastingNotif ->
-            { SkillId, Buff1 } = msg_reader:read_int(Buff),
-            { SkillSeq, Buff2 } = msg_reader:read_int(Buff1),
-            { PlayerId, Buff3 } = msg_reader:read_int(Buff2),
-            { TargetId, Buff4 } = msg_reader:read_int(Buff3),
-            { X, Buff5 } = msg_reader:read_single(Buff4),
-            { Y, Buff6 } = msg_reader:read_single(Buff5),
-            { Lame, _ } = msg_reader:read_int(Buff6),
+            {SkillId, Buff1} = msg_reader:read_uint(Buff),
+            {SkillSeq, Buff2} = msg_reader:read_uint(Buff1),
+            {PlayerId, Buff3} = msg_reader:read_uint(Buff2),
+            {TargetId, Buff4} = msg_reader:read_uint(Buff3),
+            {X, Buff5} = msg_reader:read_single(Buff4),
+            {Y, Buff6} = msg_reader:read_single(Buff5),
+            {Lame, _} = msg_reader:read_uint(Buff6),
             #msg_CastingNotif{
                 skillId = SkillId,
                 skillSeq = SkillSeq,
@@ -1041,11 +1041,11 @@ read_msg(Buff, MsgId) ->
                 y = Y,
                 lame = Lame};
         ?MSG_CastedNotif ->
-            { SkillId, Buff1 } = msg_reader:read_int(Buff),
-            { SkillSeq, Buff2 } = msg_reader:read_int(Buff1),
-            { PlayerId, Buff3 } = msg_reader:read_int(Buff2),
-            { TargetId, Buff4 } = msg_reader:read_int(Buff3),
-            { ResultId, _ } = msg_reader:read_byte(Buff4),
+            {SkillId, Buff1} = msg_reader:read_uint(Buff),
+            {SkillSeq, Buff2} = msg_reader:read_uint(Buff1),
+            {PlayerId, Buff3} = msg_reader:read_uint(Buff2),
+            {TargetId, Buff4} = msg_reader:read_uint(Buff3),
+            {ResultId, _} = msg_reader:read_byte(Buff4),
             #msg_CastedNotif{
                 skillId = SkillId,
                 skillSeq = SkillSeq,
@@ -1053,44 +1053,44 @@ read_msg(Buff, MsgId) ->
                 targetId = TargetId,
                 resultId = ResultId};
         ?MSG_CastingAck ->
-            { SkillId, Buff1 } = msg_reader:read_int(Buff),
-            { SkillSeq, Buff2 } = msg_reader:read_int(Buff1),
-            { ErrorId, _ } = msg_reader:read_int(Buff2),
+            {SkillId, Buff1} = msg_reader:read_uint(Buff),
+            {SkillSeq, Buff2} = msg_reader:read_uint(Buff1),
+            {ErrorId, _} = msg_reader:read_uint(Buff2),
             #msg_CastingAck{
                 skillId = SkillId,
                 skillSeq = SkillSeq,
                 errorId = ErrorId};
         ?MSG_SkillCooldownNotif ->
-            { SkillId, Buff1 } = msg_reader:read_int(Buff),
-            { Cooldown, _ } = msg_reader:read_int(Buff1),
+            {SkillId, Buff1} = msg_reader:read_uint(Buff),
+            {Cooldown, _} = msg_reader:read_uint(Buff1),
             #msg_SkillCooldownNotif{
                 skillId = SkillId,
                 cooldown = Cooldown};
         ?MSG_CreatureAppearNotif ->
-            { Type, Buff1 } = msg_reader:read_int(Buff),
-            { Career, Buff2 } = msg_reader:read_int(Buff1),
-            { Gender, Buff3 } = msg_reader:read_byte(Buff2),
-            { Name, Buff4 } = msg_reader:read_str(Buff3),
-            { Id, Buff5 } = msg_reader:read_int(Buff4),
-            { UserId, Buff6 } = msg_reader:read_int(Buff5),
-            { X, Buff7 } = msg_reader:read_single(Buff6),
-            { Y, Buff8 } = msg_reader:read_single(Buff7),
-            { Angle, Buff9 } = msg_reader:read_single(Buff8),
-            { Radius, Buff10 } = msg_reader:read_single(Buff9),
-            { MovementSpeed, Buff11 } = msg_reader:read_single(Buff10),
-            { Health, Buff12 } = msg_reader:read_single(Buff11),
-            { Hp, Buff13 } = msg_reader:read_single(Buff12),
-            { Mana, Buff14 } = msg_reader:read_single(Buff13),
-            { Mp, Buff15 } = msg_reader:read_single(Buff14),
-            { CampId, Buff16 } = msg_reader:read_byte(Buff15),
-            { ForceId, Buff17 } = msg_reader:read_byte(Buff16),
-            { Attackable, Buff18 } = msg_reader:read_byte(Buff17),
-            { Talkable, Buff19 } = msg_reader:read_byte(Buff18),
-            { MonsterClass, Buff20 } = msg_reader:read_int(Buff19),
-            { TableId, Buff21 } = msg_reader:read_int(Buff20),
-            { State, Buff22 } = msg_reader:read_int(Buff21),
-            { Level, Buff23 } = msg_reader:read_int(Buff22),
-            { IsBuilding, _ } = msg_reader:read_byte(Buff23),
+            {Type, Buff1} = msg_reader:read_uint(Buff),
+            {Career, Buff2} = msg_reader:read_uint(Buff1),
+            {Gender, Buff3} = msg_reader:read_byte(Buff2),
+            {Name, Buff4} = msg_reader:read_str(Buff3),
+            {Id, Buff5} = msg_reader:read_uint(Buff4),
+            {UserId, Buff6} = msg_reader:read_uint(Buff5),
+            {X, Buff7} = msg_reader:read_single(Buff6),
+            {Y, Buff8} = msg_reader:read_single(Buff7),
+            {Angle, Buff9} = msg_reader:read_single(Buff8),
+            {Radius, Buff10} = msg_reader:read_single(Buff9),
+            {MovementSpeed, Buff11} = msg_reader:read_single(Buff10),
+            {Health, Buff12} = msg_reader:read_single(Buff11),
+            {Hp, Buff13} = msg_reader:read_single(Buff12),
+            {Mana, Buff14} = msg_reader:read_single(Buff13),
+            {Mp, Buff15} = msg_reader:read_single(Buff14),
+            {CampId, Buff16} = msg_reader:read_byte(Buff15),
+            {ForceId, Buff17} = msg_reader:read_byte(Buff16),
+            {Attackable, Buff18} = msg_reader:read_byte(Buff17),
+            {Talkable, Buff19} = msg_reader:read_byte(Buff18),
+            {MonsterClass, Buff20} = msg_reader:read_int(Buff19),
+            {TableId, Buff21} = msg_reader:read_int(Buff20),
+            {State, Buff22} = msg_reader:read_int(Buff21),
+            {Level, Buff23} = msg_reader:read_uint(Buff22),
+            {IsBuilding, _} = msg_reader:read_byte(Buff23),
             #msg_CreatureAppearNotif{
                 type = Type,
                 career = Career,
@@ -1117,28 +1117,28 @@ read_msg(Buff, MsgId) ->
                 level = Level,
                 isBuilding = IsBuilding};
         ?MSG_CreatureDisappearNotif ->
-            { Id, _ } = msg_reader:read_int(Buff),
+            {Id, _} = msg_reader:read_uint(Buff),
             #msg_CreatureDisappearNotif{
                 id = Id};
         ?MSG_CreatureOnNotif ->
-            { Name, Buff1 } = msg_reader:read_str(Buff),
-            { Id, _ } = msg_reader:read_int(Buff1),
+            {Name, Buff1} = msg_reader:read_str(Buff),
+            {Id, _} = msg_reader:read_uint(Buff1),
             #msg_CreatureOnNotif{
                 name = Name,
                 id = Id};
         ?MSG_CreatureOffNotif ->
-            { Id, _ } = msg_reader:read_int(Buff),
+            {Id, _} = msg_reader:read_uint(Buff),
             #msg_CreatureOffNotif{
                 id = Id};
         ?MSG_OperatorAppearNotif ->
-            { Id, Buff1 } = msg_reader:read_int(Buff),
-            { Type, Buff2 } = msg_reader:read_int(Buff1),
-            { X, Buff3 } = msg_reader:read_single(Buff2),
-            { Y, Buff4 } = msg_reader:read_single(Buff3),
-            { Angle, Buff5 } = msg_reader:read_single(Buff4),
-            { SubType, Buff6 } = msg_reader:read_int(Buff5),
-            { Arg1, Buff7 } = msg_reader:read_int(Buff6),
-            { Arg2, _ } = msg_reader:read_int(Buff7),
+            {Id, Buff1} = msg_reader:read_uint(Buff),
+            {Type, Buff2} = msg_reader:read_int(Buff1),
+            {X, Buff3} = msg_reader:read_single(Buff2),
+            {Y, Buff4} = msg_reader:read_single(Buff3),
+            {Angle, Buff5} = msg_reader:read_single(Buff4),
+            {SubType, Buff6} = msg_reader:read_int(Buff5),
+            {Arg1, Buff7} = msg_reader:read_uint(Buff6),
+            {Arg2, _} = msg_reader:read_uint(Buff7),
             #msg_OperatorAppearNotif{
                 id = Id,
                 type = Type,
@@ -1149,55 +1149,55 @@ read_msg(Buff, MsgId) ->
                 arg1 = Arg1,
                 arg2 = Arg2};
         ?MSG_OperatorDisappearNotif ->
-            { Id, _ } = msg_reader:read_int(Buff),
+            {Id, _} = msg_reader:read_uint(Buff),
             #msg_OperatorDisappearNotif{
                 id = Id};
         ?MSG_AddBuffNotif ->
-            { PlayerId, Buff1 } = msg_reader:read_int(Buff),
-            { BuffId, Buff2 } = msg_reader:read_int(Buff1),
-            { BuffLevel, Buff3 } = msg_reader:read_int(Buff2),
-            { BuffTime, _ } = msg_reader:read_int(Buff3),
+            {PlayerId, Buff1} = msg_reader:read_uint(Buff),
+            {BuffId, Buff2} = msg_reader:read_uint(Buff1),
+            {BuffLevel, Buff3} = msg_reader:read_int(Buff2),
+            {BuffTime, _} = msg_reader:read_uint(Buff3),
             #msg_AddBuffNotif{
                 playerId = PlayerId,
                 buffId = BuffId,
                 buffLevel = BuffLevel,
                 buffTime = BuffTime};
         ?MSG_UpdateBuffNotif ->
-            { PlayerId, Buff1 } = msg_reader:read_int(Buff),
-            { BuffId, Buff2 } = msg_reader:read_int(Buff1),
-            { BuffLevel, Buff3 } = msg_reader:read_int(Buff2),
-            { BuffTime, _ } = msg_reader:read_int(Buff3),
+            {PlayerId, Buff1} = msg_reader:read_uint(Buff),
+            {BuffId, Buff2} = msg_reader:read_uint(Buff1),
+            {BuffLevel, Buff3} = msg_reader:read_int(Buff2),
+            {BuffTime, _} = msg_reader:read_uint(Buff3),
             #msg_UpdateBuffNotif{
                 playerId = PlayerId,
                 buffId = BuffId,
                 buffLevel = BuffLevel,
                 buffTime = BuffTime};
         ?MSG_DelBuffNotif ->
-            { PlayerId, Buff1 } = msg_reader:read_int(Buff),
-            { BuffId, _ } = msg_reader:read_int(Buff1),
+            {PlayerId, Buff1} = msg_reader:read_uint(Buff),
+            {BuffId, _} = msg_reader:read_uint(Buff1),
             #msg_DelBuffNotif{
                 playerId = PlayerId,
                 buffId = BuffId};
         ?MSG_MoveEquip ->
-            { SourceOwnerId, Buff1 } = msg_reader:read_int(Buff),
-            { PositionFrom, Buff2 } = msg_reader:read_byte(Buff1),
-            { PositionTo, _ } = msg_reader:read_byte(Buff2),
+            {SourceOwnerId, Buff1} = msg_reader:read_uint(Buff),
+            {PositionFrom, Buff2} = msg_reader:read_byte(Buff1),
+            {PositionTo, _} = msg_reader:read_byte(Buff2),
             #msg_MoveEquip{
                 sourceOwnerId = SourceOwnerId,
                 positionFrom = PositionFrom,
                 positionTo = PositionTo};
         ?MSG_MoveEquipAck ->
-            { ErrorId, Buff1 } = msg_reader:read_int(Buff),
-            { EquipmentId, Buff2 } = msg_reader:read_str(Buff1),
-            { IconId, Buff3 } = msg_reader:read_str(Buff2),
-            { EquipmentRes, Buff4 } = msg_reader:read_str(Buff3),
-            { Position, Buff5 } = msg_reader:read_byte(Buff4),
-            { ItemType, Buff6 } = msg_reader:read_byte(Buff5),
-            { Count, Buff7 } = msg_reader:read_int(Buff6),
-            { EquipmentType, Buff8 } = msg_reader:read_str(Buff7),
-            { Grade, Buff9 } = msg_reader:read_str(Buff8),
-            { TemplateId, Buff10 } = msg_reader:read_int(Buff9),
-            { Special, _ } = msg_reader:read_int(Buff10),
+            {ErrorId, Buff1} = msg_reader:read_uint(Buff),
+            {EquipmentId, Buff2} = msg_reader:read_str(Buff1),
+            {IconId, Buff3} = msg_reader:read_str(Buff2),
+            {EquipmentRes, Buff4} = msg_reader:read_str(Buff3),
+            {Position, Buff5} = msg_reader:read_byte(Buff4),
+            {ItemType, Buff6} = msg_reader:read_byte(Buff5),
+            {Count, Buff7} = msg_reader:read_int(Buff6),
+            {EquipmentType, Buff8} = msg_reader:read_str(Buff7),
+            {Grade, Buff9} = msg_reader:read_str(Buff8),
+            {TemplateId, Buff10} = msg_reader:read_uint(Buff9),
+            {Special, _} = msg_reader:read_int(Buff10),
             #msg_MoveEquipAck{
                 errorId = ErrorId,
                 equipmentId = EquipmentId,
@@ -1211,17 +1211,17 @@ read_msg(Buff, MsgId) ->
                 templateId = TemplateId,
                 special = Special};
         ?MSG_MoveEquipNotif ->
-            { OwnerId, Buff1 } = msg_reader:read_int(Buff),
-            { EquipmentId, Buff2 } = msg_reader:read_str(Buff1),
-            { IconId, Buff3 } = msg_reader:read_str(Buff2),
-            { EquipmentRes, Buff4 } = msg_reader:read_str(Buff3),
-            { Position, Buff5 } = msg_reader:read_byte(Buff4),
-            { ItemType, Buff6 } = msg_reader:read_byte(Buff5),
-            { Count, Buff7 } = msg_reader:read_int(Buff6),
-            { EquipmentType, Buff8 } = msg_reader:read_str(Buff7),
-            { Grade, Buff9 } = msg_reader:read_str(Buff8),
-            { TemplateId, Buff10 } = msg_reader:read_int(Buff9),
-            { Special, _ } = msg_reader:read_int(Buff10),
+            {OwnerId, Buff1} = msg_reader:read_uint(Buff),
+            {EquipmentId, Buff2} = msg_reader:read_str(Buff1),
+            {IconId, Buff3} = msg_reader:read_str(Buff2),
+            {EquipmentRes, Buff4} = msg_reader:read_str(Buff3),
+            {Position, Buff5} = msg_reader:read_byte(Buff4),
+            {ItemType, Buff6} = msg_reader:read_byte(Buff5),
+            {Count, Buff7} = msg_reader:read_int(Buff6),
+            {EquipmentType, Buff8} = msg_reader:read_str(Buff7),
+            {Grade, Buff9} = msg_reader:read_str(Buff8),
+            {TemplateId, Buff10} = msg_reader:read_uint(Buff9),
+            {Special, _} = msg_reader:read_int(Buff10),
             #msg_MoveEquipNotif{
                 ownerId = OwnerId,
                 equipmentId = EquipmentId,
@@ -1235,27 +1235,27 @@ read_msg(Buff, MsgId) ->
                 templateId = TemplateId,
                 special = Special};
         ?MSG_DropEquip ->
-            { Position, _ } = msg_reader:read_byte(Buff),
+            {Position, _} = msg_reader:read_byte(Buff),
             #msg_DropEquip{
                 position = Position};
         ?MSG_DropEquipAck ->
-            { Position, Buff1 } = msg_reader:read_byte(Buff),
-            { ErrorId, _ } = msg_reader:read_int(Buff1),
+            {Position, Buff1} = msg_reader:read_byte(Buff),
+            {ErrorId, _} = msg_reader:read_uint(Buff1),
             #msg_DropEquipAck{
                 position = Position,
                 errorId = ErrorId};
         ?MSG_UpdatedEquipNotif ->
-            { OwnerId, Buff1 } = msg_reader:read_int(Buff),
-            { EquipmentId, Buff2 } = msg_reader:read_str(Buff1),
-            { IconId, Buff3 } = msg_reader:read_str(Buff2),
-            { EquipmentRes, Buff4 } = msg_reader:read_str(Buff3),
-            { Position, Buff5 } = msg_reader:read_byte(Buff4),
-            { ItemType, Buff6 } = msg_reader:read_byte(Buff5),
-            { Count, Buff7 } = msg_reader:read_int(Buff6),
-            { EquipmentType, Buff8 } = msg_reader:read_str(Buff7),
-            { Grade, Buff9 } = msg_reader:read_str(Buff8),
-            { TemplateId, Buff10 } = msg_reader:read_int(Buff9),
-            { Special, _ } = msg_reader:read_int(Buff10),
+            {OwnerId, Buff1} = msg_reader:read_uint(Buff),
+            {EquipmentId, Buff2} = msg_reader:read_str(Buff1),
+            {IconId, Buff3} = msg_reader:read_str(Buff2),
+            {EquipmentRes, Buff4} = msg_reader:read_str(Buff3),
+            {Position, Buff5} = msg_reader:read_byte(Buff4),
+            {ItemType, Buff6} = msg_reader:read_byte(Buff5),
+            {Count, Buff7} = msg_reader:read_int(Buff6),
+            {EquipmentType, Buff8} = msg_reader:read_str(Buff7),
+            {Grade, Buff9} = msg_reader:read_str(Buff8),
+            {TemplateId, Buff10} = msg_reader:read_uint(Buff9),
+            {Special, _} = msg_reader:read_int(Buff10),
             #msg_UpdatedEquipNotif{
                 ownerId = OwnerId,
                 equipmentId = EquipmentId,
@@ -1269,25 +1269,25 @@ read_msg(Buff, MsgId) ->
                 templateId = TemplateId,
                 special = Special};
         ?MSG_ListEquip ->
-            { OwnerId, Buff1 } = msg_reader:read_int(Buff),
-            { Bag, Buff2 } = msg_reader:read_byte(Buff1),
-            { Equipment, _ } = msg_reader:read_byte(Buff2),
+            {OwnerId, Buff1} = msg_reader:read_uint(Buff),
+            {Bag, Buff2} = msg_reader:read_byte(Buff1),
+            {Equipment, _} = msg_reader:read_byte(Buff2),
             #msg_ListEquip{
                 ownerId = OwnerId,
                 bag = Bag,
                 equipment = Equipment};
         ?MSG_ListEquipAck ->
-            { OwnerId, Buff1 } = msg_reader:read_int(Buff),
-            { EquipmentId, Buff2 } = msg_reader:read_str(Buff1),
-            { IconId, Buff3 } = msg_reader:read_str(Buff2),
-            { EquipmentRes, Buff4 } = msg_reader:read_str(Buff3),
-            { Position, Buff5 } = msg_reader:read_byte(Buff4),
-            { ItemType, Buff6 } = msg_reader:read_byte(Buff5),
-            { Count, Buff7 } = msg_reader:read_int(Buff6),
-            { EquipmentType, Buff8 } = msg_reader:read_str(Buff7),
-            { Grade, Buff9 } = msg_reader:read_str(Buff8),
-            { TemplateId, Buff10 } = msg_reader:read_int(Buff9),
-            { Special, _ } = msg_reader:read_int(Buff10),
+            {OwnerId, Buff1} = msg_reader:read_uint(Buff),
+            {EquipmentId, Buff2} = msg_reader:read_str(Buff1),
+            {IconId, Buff3} = msg_reader:read_str(Buff2),
+            {EquipmentRes, Buff4} = msg_reader:read_str(Buff3),
+            {Position, Buff5} = msg_reader:read_byte(Buff4),
+            {ItemType, Buff6} = msg_reader:read_byte(Buff5),
+            {Count, Buff7} = msg_reader:read_int(Buff6),
+            {EquipmentType, Buff8} = msg_reader:read_str(Buff7),
+            {Grade, Buff9} = msg_reader:read_str(Buff8),
+            {TemplateId, Buff10} = msg_reader:read_uint(Buff9),
+            {Special, _} = msg_reader:read_int(Buff10),
             #msg_ListEquipAck{
                 ownerId = OwnerId,
                 equipmentId = EquipmentId,
@@ -1301,17 +1301,17 @@ read_msg(Buff, MsgId) ->
                 templateId = TemplateId,
                 special = Special};
         ?MSG_ListEquipNotif ->
-            { OwnerId, Buff1 } = msg_reader:read_int(Buff),
-            { EquipmentId, Buff2 } = msg_reader:read_str(Buff1),
-            { IconId, Buff3 } = msg_reader:read_str(Buff2),
-            { EquipmentRes, Buff4 } = msg_reader:read_str(Buff3),
-            { Position, Buff5 } = msg_reader:read_byte(Buff4),
-            { ItemType, Buff6 } = msg_reader:read_byte(Buff5),
-            { Count, Buff7 } = msg_reader:read_int(Buff6),
-            { EquipmentType, Buff8 } = msg_reader:read_str(Buff7),
-            { Grade, Buff9 } = msg_reader:read_str(Buff8),
-            { TemplateId, Buff10 } = msg_reader:read_int(Buff9),
-            { Special, _ } = msg_reader:read_int(Buff10),
+            {OwnerId, Buff1} = msg_reader:read_uint(Buff),
+            {EquipmentId, Buff2} = msg_reader:read_str(Buff1),
+            {IconId, Buff3} = msg_reader:read_str(Buff2),
+            {EquipmentRes, Buff4} = msg_reader:read_str(Buff3),
+            {Position, Buff5} = msg_reader:read_byte(Buff4),
+            {ItemType, Buff6} = msg_reader:read_byte(Buff5),
+            {Count, Buff7} = msg_reader:read_int(Buff6),
+            {EquipmentType, Buff8} = msg_reader:read_str(Buff7),
+            {Grade, Buff9} = msg_reader:read_str(Buff8),
+            {TemplateId, Buff10} = msg_reader:read_uint(Buff9),
+            {Special, _} = msg_reader:read_int(Buff10),
             #msg_ListEquipNotif{
                 ownerId = OwnerId,
                 equipmentId = EquipmentId,
@@ -1325,63 +1325,63 @@ read_msg(Buff, MsgId) ->
                 templateId = TemplateId,
                 special = Special};
         ?MSG_SimpleMessageNotif ->
-            { N, _ } = msg_reader:read_int(Buff),
+            {N, _} = msg_reader:read_uint(Buff),
             #msg_SimpleMessageNotif{
                 n = N};
         ?MSG_Command ->
-            { ClientSideId, Buff1 } = msg_reader:read_int(Buff),
-            { Command, _ } = msg_reader:read_str(Buff1),
+            {ClientSideId, Buff1} = msg_reader:read_uint(Buff),
+            {Command, _} = msg_reader:read_str(Buff1),
             #msg_Command{
                 clientSideId = ClientSideId,
                 command = Command};
         ?MSG_CommandAck ->
-            { ClientSideId, Buff1 } = msg_reader:read_int(Buff),
-            { Result, _ } = msg_reader:read_str(Buff1),
+            {ClientSideId, Buff1} = msg_reader:read_uint(Buff),
+            {Result, _} = msg_reader:read_str(Buff1),
             #msg_CommandAck{
                 clientSideId = ClientSideId,
                 result = Result};
         ?MSG_Task ->
-            { TaskId, Buff1 } = msg_reader:read_int(Buff),
-            { TaskState, _ } = msg_reader:read_int(Buff1),
+            {TaskId, Buff1} = msg_reader:read_uint(Buff),
+            {TaskState, _} = msg_reader:read_uint(Buff1),
             #msg_Task{
                 taskId = TaskId,
                 taskState = TaskState};
         ?MSG_ChangeTable ->
-            { TableId, _ } = msg_reader:read_int(Buff),
+            {TableId, _} = msg_reader:read_int(Buff),
             #msg_ChangeTable{
                 tableId = TableId};
         ?MSG_ChangeTableAck ->
-            { TableId, _ } = msg_reader:read_int(Buff),
+            {TableId, _} = msg_reader:read_int(Buff),
             #msg_ChangeTableAck{
                 tableId = TableId};
         ?MSG_AssignLeader ->
-            { NewLeaderId, _ } = msg_reader:read_int(Buff),
+            {NewLeaderId, _} = msg_reader:read_uint(Buff),
             #msg_AssignLeader{
                 newLeaderId = NewLeaderId};
         ?MSG_AssignLeaderAck ->
-            { ResultId, _ } = msg_reader:read_int(Buff),
+            {ResultId, _} = msg_reader:read_int(Buff),
             #msg_AssignLeaderAck{
                 resultId = ResultId};
         ?MSG_LockPlayer ->
-            { Lock, _ } = msg_reader:read_byte(Buff),
+            {Lock, _} = msg_reader:read_byte(Buff),
             #msg_LockPlayer{
                 lock = Lock};
         ?MSG_WinnerNotif ->
-            { ForceId, _ } = msg_reader:read_int(Buff),
+            {ForceId, _} = msg_reader:read_uint(Buff),
             #msg_WinnerNotif{
                 forceId = ForceId};
         ?MSG_SpeakNotif ->
-            { SpeakerId, Buff1 } = msg_reader:read_int(Buff),
-            { Content, _ } = msg_reader:read_str(Buff1),
+            {SpeakerId, Buff1} = msg_reader:read_uint(Buff),
+            {Content, _} = msg_reader:read_str(Buff1),
             #msg_SpeakNotif{
                 speakerId = SpeakerId,
                 content = Content};
         ?MSG_Talk ->
-            { TargetId, _ } = msg_reader:read_int(Buff),
+            {TargetId, _} = msg_reader:read_uint(Buff),
             #msg_Talk{
                 targetId = TargetId};
         ?MSG_TalkAck ->
-            { ResultId, _ } = msg_reader:read_int(Buff),
+            {ResultId, _} = msg_reader:read_int(Buff),
             #msg_TalkAck{
                 resultId = ResultId};
         _ ->

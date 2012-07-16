@@ -15,6 +15,10 @@ read_short(Buff) ->
 	{H, T}.
 
 read_int(Buff) ->
+	{<<H:32/signed>>, T} = split_binary(Buff, 4),
+	{H, T}.
+
+read_uint(Buff) ->
 	{<<H:32>>, T} = split_binary(Buff, 4),
 	{H, T}.
 
