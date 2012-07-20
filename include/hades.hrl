@@ -1,0 +1,2 @@
+-define(HOST, "http://192.168.0.106/").
+-define(VERSION, {0,8,0,74}).

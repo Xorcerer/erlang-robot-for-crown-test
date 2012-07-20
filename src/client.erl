@@ -1,7 +1,7 @@
 -module(client).
 -export([start/0]).
--include("records.hrl").
--include("playerInfo.hrl").
+-include("../include/records.hrl").
+-include("../include/playerInfo.hrl").
 -import(msg, [write_msg/1, read_msg/2]).
 -import(timer, [start/2]).
 -import(flags, [extract_str/2, extract_int/2]).
