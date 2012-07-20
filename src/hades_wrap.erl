@@ -31,7 +31,30 @@ register_user(UserName) ->
 	{struct, [{<<"res">>, <<"ok">>}, {<<"userid">>, UserId}]} = decode(Result),
 	{SessionId, SId, AId, UserId}.
 
-acceptable_tasks(Context) -> true.
+acceptable_tasks(Context) -> ok.
+
+%% by far, only return a single tid.
+my_tasks(Context) ->
+	{SessionId, SId, AId, UserId} = Context,
+	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
+		get_url("task/mytask?client=flash&accountid=" ++ AId ++
+			"&userid=" ++ integer_to_list(UserId) ++
+			"&format=json&sessionid=" ++ SId ++
+			"&tag=" ++ integer_to_list(get_time_stamp())),
+	{struct, [{<<"my_task">>, [{struct, Props}]}]} = decode(Result),
+	{_, Tid} = lists:keyfind(<<"tid">>, 1, Props),
+	Tid.
+
+finish_task(Context, Tid) ->
+	{SessionId, SId, AId, UserId} = Context,
+	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
+		post_url("task/finish",
+			"accountid=" ++ AId ++
+			"&tag=" ++ integer_to_list(get_time_stamp()) ++
+			"&client=flash&tid=" ++ integer_to_list(Tid) ++
+			"&userid=" ++ integer_to_list(UserId) ++
+			"&format=json&sessionid=" ++ SId),
+	{struct, [{<<"res">>,<<"ok">>}|_]} = decode(Result).
 
 %% todo: wrap the followings
 visit_register() ->

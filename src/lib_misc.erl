@@ -23,3 +23,8 @@ gather([Pid|T], Ref) ->
 	end;
 gather([], _) ->
 	[].
+
+unconsult(File, L) ->
+	{ok, S} = file:open(File, write),
+	lists:foreach(fun(X) -> io:format(S, "~p.~n" ,[X]) end, L),
+	file:close(S).
