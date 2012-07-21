@@ -45,6 +45,19 @@ my_tasks(Context) ->
 	{_, Tid} = lists:keyfind(<<"tid">>, 1, Props),
 	Tid.
 
+get_game_server(Context) ->
+	{SessionId, SId, AId, UserId} = Context,
+	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
+		get_url("profile/locate?accountid=" ++ AId ++
+			"&tag=" ++ integer_to_list(get_time_stamp()) ++
+			"&client=flash&format=json&userid=" ++ integer_to_list(UserId) ++
+			"&sessionid=" ++ SId),
+	{struct, Props} = decode(Result),
+	{_, Host} = lists:keyfind(<<"host">>, 1, Props),
+	{_, PortS} = lists:keyfind(<<"port">>, 1, Props),
+	{Port, _} = string:to_integer(PortS),
+	{Host, Port}.
+
 finish_task(Context, Tid) ->
 	{SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
@@ -54,7 +67,10 @@ finish_task(Context, Tid) ->
 			"&client=flash&tid=" ++ integer_to_list(Tid) ++
 			"&userid=" ++ integer_to_list(UserId) ++
 			"&format=json&sessionid=" ++ SId),
-	{struct, [{<<"res">>,<<"ok">>}|_]} = decode(Result).
+	{struct, [{<<"res">>,<<"ok">>}|Props]} = decode(Result),
+	{_, AcceptableTask} = lists:keyfind(<<"accpetable_task">>, 1, Props),
+	{_, NextTid} = lists:keyfind(<<"tid">>, AcceptableTask),
+	NextTid.
 
 %% todo: wrap the followings
 visit_register() ->
