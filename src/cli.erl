@@ -1,10 +1,10 @@
--module(client).
+-module(cli).
 -compile(export_all).
 -include("../include/records.hrl").
 -include("../include/playerInfo.hrl").
 -import(msg, [write_msg/1, read_msg/2]).
--import(timer, [start/2]).
 -import(flags, [extract_str/2, extract_int/2]).
+-import(lib_misc, [timer/2]).
 
 start() ->
 	N = flags:extract_int(count, 100),
@@ -14,20 +14,25 @@ start() ->
 player() ->
 	Host = flags:extract_str(host, "localhost"),
 	Port = flags:extract_int(port, 9527),
+	UserId = flags:extract_int(uid, 29921),
 	Self = self(),
-    player(Host, Port,
+    player(Host, Port, UserId,
 		fun(_Msg) ->
-			timer:start(250,
+			spawn(
 				fun() ->
-					%io:format("send internal move~n"),
-					Self ! {move, random}
-				end)
+					timer(250,
+						fun() ->
+							%io:format("send internal move~n"),
+							Self ! {move, random}
+						end
+					)
+				end
+			)
 		end).
 
-player(Host, Port, OnKnowSelfPos) ->
+player(Host, Port, UserId, OnKnowSelfPos) ->
     {ok, Socket} = gen_tcp:connect(Host, Port,
 		[binary, {packet, 0}, {nodelay, true}, {active, false}]),
-	UserId = flags:extract_int(uid, 29921),
     ok = gen_tcp:send(Socket,
 		binary_to_list(msg:write_msg(#msg_Login{
 			sessionKey = "HELLO",
@@ -40,11 +45,15 @@ player(Host, Port, OnKnowSelfPos) ->
 	{ok, Buff} = gen_tcp:recv(Socket, MsgLen),
 	#msg_LoginAck{errCode = 0, id = PlayerId} = msg:read_msg(Buff, ?MSG_LoginAck),
 	Self = self(),
-	timer:start(3000,
+	spawn(
 		fun() ->
-			%io:format("send internal ping~n"),
-			Self ! ping
-		end),
+			timer(3000,
+				fun() ->
+					%io:format("send internal ping~n"),
+					Self ! ping
+				end)
+			end
+		),
 	spawn(
 		fun() ->
 			socket_loop(Self, Socket)

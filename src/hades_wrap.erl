@@ -53,8 +53,10 @@ get_game_server(Context) ->
 			"&client=flash&format=json&userid=" ++ integer_to_list(UserId) ++
 			"&sessionid=" ++ SId),
 	{struct, Props} = decode(Result),
-	{_, Host} = lists:keyfind(<<"host">>, 1, Props),
-	{_, PortS} = lists:keyfind(<<"port">>, 1, Props),
+	{_, HostB} = lists:keyfind(<<"host">>, 1, Props),
+	{_, PortB} = lists:keyfind(<<"port">>, 1, Props),
+	Host = binary_to_list(HostB),
+	PortS = binary_to_list(PortB),
 	{Port, _} = string:to_integer(PortS),
 	{Host, Port}.
 
@@ -68,9 +70,22 @@ finish_task(Context, Tid) ->
 			"&userid=" ++ integer_to_list(UserId) ++
 			"&format=json&sessionid=" ++ SId),
 	{struct, [{<<"res">>,<<"ok">>}|Props]} = decode(Result),
-	{_, AcceptableTask} = lists:keyfind(<<"accpetable_task">>, 1, Props),
-	{_, NextTid} = lists:keyfind(<<"tid">>, AcceptableTask),
+	%% only extract one of the next tasks
+	{_, [{struct, AcceptableTaskB} | _]} = lists:keyfind(<<"accpetable_task">>, 1, Props),
+	{_, NextTid} = lists:keyfind(<<"tid">>, 1, AcceptableTaskB),
 	NextTid.
+
+accept_task(Context, Tid) ->
+	{SessionId, SId, AId, UserId} = Context,
+	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
+		post_url("task/accept",
+			"accountid=" ++ AId ++
+			"&tag=" ++ integer_to_list(get_time_stamp()) ++
+			"&tid=" ++ integer_to_list(Tid) ++
+			"&client=flash&reduce%5Fcooldown=0&format=json&userid=" ++ integer_to_list(UserId) ++
+			"&sessionid=" ++ SId),
+	{struct, [{<<"res">>,<<"ok">>}|_]} = decode(Result),
+	ok.
 
 %% todo: wrap the followings
 visit_register() ->

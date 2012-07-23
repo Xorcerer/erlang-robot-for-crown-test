@@ -9,6 +9,7 @@ version_tostr(Split) ->
 	string:join(L1, Split).
 
 get_url(Url) ->
+	io:format("get_url ~p~n", [Url]),
 	httpc:request(
 		get,
 		{
