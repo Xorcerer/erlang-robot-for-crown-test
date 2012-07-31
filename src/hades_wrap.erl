@@ -87,6 +87,30 @@ accept_task(Context, Tid) ->
 	{struct, [{<<"res">>,<<"ok">>}|_]} = decode(Result),
 	ok.
 
+get_map_table(Context, Tid) ->
+	{SessionId, SId, AId, UserId} = Context,
+	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
+		get_url("scene/get_map_table_list?accountid=" ++ AId ++
+			"&userid=" ++ integer_to_list(UserId) ++
+			"&taskid=" ++ integer_to_list(Tid) ++
+			"&client=flash&tag=" ++ integer_to_list(get_time_stamp()) ++
+			"&format=json&sessionid=" ++ SId),
+	 {struct, [{GsIdB, _}|_]} = mochijson2:decode(Result),
+	 binary_to_list(GsIdB).
+
+jump_to_task(Context, Tid, GsId) ->
+	{SessionId, SId, AId, UserId} = Context,
+	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
+		post_url("scene/jump_to_task_location",
+			"accountid=" ++ AId ++
+			"&userid=" ++ integer_to_list(UserId) ++
+			"&table=%2D1&client=flash&tag=" ++ integer_to_list(get_time_stamp()) ++
+			"&gsid=" ++ edoc_lib:escape_uri(GsId) ++
+			"&tid=" ++ integer_to_list(Tid) ++
+			"&format=json&sessionid=" ++ SId),
+	{struct, [{<<"res">>,<<"ok">>}|_]} = decode(Result),
+	ok.
+
 %% todo: wrap the followings
 visit_register() ->
 	VersionStr = version_tostr("_"),
