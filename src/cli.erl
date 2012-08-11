@@ -8,7 +8,6 @@
 
 start() ->
 	N = flags:extract_int(count, 100),
-	%N = 1,
 	[ spawn(fun player/0) || _ <- lists:seq(1, N) ].
 
 player() ->
@@ -122,9 +121,7 @@ loop(Socket, PlayerInfo, FrameNo, OnKnowSelfPos) ->
 			y = Y,
 			angle = Angle} ->
 			%io:format("move notif(x=~p, y=~p, angle=~p)~n", [X, Y, Angle]),
-			PlayerInfo1 = #playerInfo{
-				userId = UserId,
-				playerId = PlayerId,
+			PlayerInfo1 = PlayerInfo#playerInfo{
 				pose = #pose{
 					x = X,
 					y = Y,
@@ -139,9 +136,7 @@ loop(Socket, PlayerInfo, FrameNo, OnKnowSelfPos) ->
 			y = Y,
 			angle = Angle} = Msg ->
 			%io:format("creature appear~n"),
-			PlayerInfo1 = #playerInfo{
-				userId = UserId,
-				playerId = PlayerId,
+			PlayerInfo1 = PlayerInfo#playerInfo{
 				pose = #pose{
 					x = X,
 					y = Y,
