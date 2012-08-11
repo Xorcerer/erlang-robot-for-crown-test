@@ -1,3 +1,7 @@
 *.beam
 *.dump
 *.dat
+
+# IntelliJ Idea
+.idea/
+*.iml
