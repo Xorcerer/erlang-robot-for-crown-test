@@ -44,17 +44,20 @@ player(I) ->
 		fun() ->
 			GSPlayerPid = self(),
 			io:format("spawning cli:player"),
-			cli:player(Host, Port, UserId,
-				fun(_) ->
+			cli:player(Host, Port, SId, UserId,
+				fun(_) ->	% OnKnowSelfPos
 					io:format("in cli:player"),
 					GSPlayerPid ! {move, #pose{
 						x = -1905.701, y = 1252.586, angle = 0.105}},
 					%% todo: we should have been waiting the player approaches the NPC
 					GSPlayerPid ! {task, Tid0, ?TASKSTATE_COMPLETE},
-					Self ! finished
+					Self ! {self(), finished}
+				end,
+				fun() ->	% OnQuit
+					Self ! {self(), quit}
 				end)
 		end),
-	wait(finished),
+	wait({Pid, finished}),
 	Tid1 = finish_task(Context, Tid0),
 	ok = accept_task(Context, Tid1),
 	Pid ! {task, Tid1, ?TASKSTATE_TAKEN},
@@ -65,20 +68,25 @@ player(I) ->
 	ok = accept_task(Context, Tid2),
 	GsId2 = get_map_table(Context, Tid2),
 	ok = jump_to_task(Context, Tid2, GsId2),
+	Pid ! quit,
+	wait({Pid, quit}),
 	GameServer2 = get_game_server(Context),
 	{Host2, Port2} = GameServer2,
 	Pid2 = spawn(
 		fun() ->
 			GSPlayerPid = self(),
 			io:format("spawning cli:player 2"),
-			cli:player(Host, Port, UserId,
-				fun(_) ->
+			cli:player(Host, Port, SId, UserId,
+				fun(_) ->	% OnKnowSelfPos
 					io:format("in cli:player 2"),
 					GSPlayerPid ! {move, #pose{
 						x = -1905.701, y = 1252.586, angle = 0.105}},
 					%% todo: we should have been waiting the player approaches the NPC
 					%GSPlayerPid ! {task, Tid2, ?TASKSTATE_COMPLETE},
-					Self ! moved
+					Self ! {self(), moved}
+				end,
+				fun() ->	% OnQuit
+					Self ! {self(), quit}
 				end)
 		end),
 	Context.

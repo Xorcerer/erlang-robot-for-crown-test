@@ -1,13 +1,12 @@
 -module(lib_misc).
 -compile(export_all).
--import(lists, [map/2]).
 
 pmap(F, L) ->
 	S = self(),
 	%% make_ref() returns a unique reference
 	%% we'll match on this later
 	Ref = erlang:make_ref(),
-	Pids = map(
+	Pids = lists:map(
 		fun(I) ->
 			spawn(fun() -> do_f(S, Ref, F, I) end)
 		end, L),
@@ -26,7 +25,7 @@ gather([], _) ->
 
 unconsult(File, L) ->
 	{ok, S} = file:open(File, write),
-	lists:foreach(fun(X) -> io:format(S, "~p.~n" ,[X]) end, L),
+	lists:foreach(fun(X) -> io:format(S, "~p.~n", [X]) end, L),
 	file:close(S).
 
 timer(Time, Fun) ->
