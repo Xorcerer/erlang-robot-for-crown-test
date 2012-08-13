@@ -1,4 +1,5 @@
 -module(web_cli).
+-include("../include/records.hrl").
 -include("../include/playerInfo.hrl").
 -export([start/0]).
 -import(hades_wrap,
@@ -45,16 +46,22 @@ player(I) ->
 			GSPlayerPid = self(),
 			io:format("spawning cli:player"),
 			cli:player(Host, Port, SId, UserId,
-				fun(_) ->	% OnKnowSelfPos
-					io:format("in cli:player"),
-					GSPlayerPid ! {move, #pose{
-						x = -1905.701, y = 1252.586, angle = 0.105}},
-					%% todo: we should have been waiting the player approaches the NPC
-					GSPlayerPid ! {task, Tid0, ?TASKSTATE_COMPLETE},
-					Self ! {self(), finished}
-				end,
-				fun() ->	% OnQuit
-					Self ! {self(), quit}
+				fun(Msg) ->
+					case Msg of
+						#msg_CreatureAppearNotif{
+							id = _PlayerId,
+							x = _X,
+							y = _Y,
+							angle = _Angle} ->
+							io:format("in cli:player"),
+							GSPlayerPid ! {move, #pose{
+								x = -1905.701, y = 1252.586, angle = 0.105}},
+							%% todo: we should have been waiting the player approaches the NPC
+							GSPlayerPid ! {task, Tid0, ?TASKSTATE_COMPLETE},
+							Self ! {self(), finished};
+						quit ->
+							Self ! {self(), quit}
+					end
 				end)
 		end),
 	wait({Pid, finished}),
@@ -77,16 +84,22 @@ player(I) ->
 			GSPlayerPid = self(),
 			io:format("spawning cli:player 2"),
 			cli:player(Host, Port, SId, UserId,
-				fun(_) ->	% OnKnowSelfPos
-					io:format("in cli:player 2"),
-					GSPlayerPid ! {move, #pose{
-						x = -1905.701, y = 1252.586, angle = 0.105}},
-					%% todo: we should have been waiting the player approaches the NPC
-					%GSPlayerPid ! {task, Tid2, ?TASKSTATE_COMPLETE},
-					Self ! {self(), moved}
-				end,
-				fun() ->	% OnQuit
-					Self ! {self(), quit}
+				fun(Msg) ->
+					case Msg of
+						#msg_CreatureAppearNotif{
+							id = _PlayerId,
+							x = _X,
+							y = _Y,
+							angle = _Angle} ->
+							io:format("in cli:player 2"),
+							GSPlayerPid ! {move, #pose{
+								x = -1905.701, y = 1252.586, angle = 0.105}},
+							%% todo: we should have been waiting the player approaches the NPC
+							%GSPlayerPid ! {task, Tid2, ?TASKSTATE_COMPLETE},
+							Self ! {self(), moved};
+						quit ->
+							Self ! {self(), quit}
+					end
 				end)
 		end),
 	Context.
