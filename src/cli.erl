@@ -160,7 +160,7 @@ loop(Socket, PlayerInfo, FrameNo, OnMsg) ->
 			loop(Socket, PlayerInfo1, FrameNo, OnMsg);
 		#msg_CreatureDisappearNotif{
 			id = PlayerId} ->
-			OnMsg(quit);	% self disappear, so quit the loop
+			OnMsg(quitAck);	% self disappear, so quit the loop
 
 		{task, TaskId, TaskState} ->
 			ok = gen_tcp:send(Socket,

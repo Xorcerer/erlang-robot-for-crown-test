@@ -13,6 +13,7 @@
 		jump_to_task/3
 	]).
 -import(lib_misc, [pmap/2, unconsult/2, wait/1]).
+-import(game_map, [read_map/1]).
 %-import(cli, [player/2]).
 
 start() ->
@@ -41,7 +42,7 @@ player(I) ->
 	io:format("got game server location: host = ~p, port = ~p~n", [Host, Port]),
 	Self = self(),
 	%% todo: kill this process and its inner player process when needed
-	Pid = spawn(
+	Pid0 = spawn(
 		fun() ->
 			GSPlayerPid = self(),
 			io:format("spawning cli:player"),
@@ -59,26 +60,29 @@ player(I) ->
 							%% todo: we should have been waiting the player approaches the NPC
 							GSPlayerPid ! {task, Tid0, ?TASKSTATE_COMPLETE},
 							Self ! {self(), finished};
-						quit ->
-							Self ! {self(), quit}
+						quitAck ->
+							Self ! {self(), quitAck}
 					end
 				end)
 		end),
-	wait({Pid, finished}),
+	wait({Pid0, finished}),
+
 	Tid1 = finish_task(Context, Tid0),
 	ok = accept_task(Context, Tid1),
-	Pid ! {task, Tid1, ?TASKSTATE_TAKEN},
-	Pid ! {move, #pose{
+	Pid0 ! {task, Tid1, ?TASKSTATE_TAKEN},
+	Pid0 ! {move, #pose{
 		x = 2021.341, y = 773.998, angle = 0.000}},
-	Pid ! {task, Tid1, ?TASKSTATE_COMPLETE},
+	Pid0 ! {task, Tid1, ?TASKSTATE_COMPLETE},
 	Tid2 = finish_task(Context, Tid1),
 	ok = accept_task(Context, Tid2),
 	GsId2 = get_map_table(Context, Tid2),
 	ok = jump_to_task(Context, Tid2, GsId2),
-	Pid ! quit,
-	wait({Pid, quit}),
+	Pid0 ! quit,
+	wait({Pid0, quitAck}),
+
 	GameServer2 = get_game_server(Context),
 	{Host2, Port2} = GameServer2,
+	{Triggers, Paths} = read_map("yewai2.grf"),	% todo: fix the hardcoded map name here
 	Pid2 = spawn(
 		fun() ->
 			GSPlayerPid = self(),
