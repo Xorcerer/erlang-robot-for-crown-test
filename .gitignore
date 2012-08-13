@@ -1,3 +1,8 @@
 *.beam
 *.dump
 *.dat
+.metadata/
+erlide.log
+erlide.log.*
+.project
+.settings/

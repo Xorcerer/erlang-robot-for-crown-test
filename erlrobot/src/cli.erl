@@ -1,7 +1,7 @@
 -module(cli).
 -compile(export_all).
--include("../include/records.hrl").
--include("../include/playerInfo.hrl").
+-include("records.hrl").
+-include("playerInfo.hrl").
 -import(msg, [write_msg/1, read_msg/2]).
 -import(flags, [extract_str/2, extract_int/2]).
 -import(lib_misc, [timer/2]).
@@ -14,7 +14,7 @@ player() ->
 	Host = flags:extract_str(host, "localhost"),
 	Port = flags:extract_int(port, 9527),
 	UserId = flags:extract_int(uid, 29921),
-	Self = self(),
+	PlayerPid = self(),
 	player(Host, Port, "HELLO", UserId,
 		fun(Msg) ->
 			case Msg of
@@ -25,14 +25,17 @@ player() ->
 					angle = _Angle} ->
 					spawn(
 						fun() ->
+							link(PlayerPid),
 							timer(250,
 								fun() ->
 									%io:format("send internal move~n"),
-									Self ! {move, random}
+									PlayerPid ! {move, random}
 								end
 							)
 						end
-					)
+					);
+				_ ->
+					void
 			end
 		end).
 
@@ -46,23 +49,25 @@ player(Host, Port, SessionId, UserId, OnMsg) ->
 			tableId = -1,
 			major = 0,
 			minor = 8,
-			revision = 0}))),
+			revision = 1}))),
 	{ok, <<?MSG_LoginAck:32, MsgLen:32>>} = gen_tcp:recv(Socket, 8),
 	{ok, Buff} = gen_tcp:recv(Socket, MsgLen),
 	#msg_LoginAck{errCode = 0, id = PlayerId} = msg:read_msg(Buff, ?MSG_LoginAck),
-	Self = self(),
+	PlayerPid = self(),
 	spawn(
 		fun() ->
+			link(PlayerPid),
 			timer(3000,
 				fun() ->
 					%io:format("send internal ping~n"),
-					Self ! ping
+					PlayerPid ! ping
 				end)
 			end
 		),
 	spawn(
 		fun() ->
-			socket_loop(Self, Socket)
+			link(PlayerPid),
+			socket_loop(PlayerPid, Socket)
 		end),
 	%io:format("start loop~n"),
 	loop(
@@ -80,13 +85,13 @@ socket_loop(P, Socket) ->
 	{ok, Buff} = gen_tcp:recv(Socket, MsgLen),
 	%io:format("in socket_loop, buff received~n"),
 	Msg = msg:read_msg(Buff, MsgId),
-	%io:format("in socket_loop, msg read:~p~n", [Msg]),
+	io:format("in socket_loop, msg read:~p~n", [Msg]),
 	P ! Msg,
 	socket_loop(P, Socket).
 
 % todo: how to leave the server? just send LockPlayer {Lock = 1uy;} ?
 loop(Socket, PlayerInfo, FrameNo, OnMsg) ->
-	%io:format("in main loop~n"),
+	io:format("in main loop~n"),
 	#playerInfo{
 		userId = UserId,
 		playerId = PlayerId,
@@ -95,8 +100,9 @@ loop(Socket, PlayerInfo, FrameNo, OnMsg) ->
 		quit ->
 			ok = gen_tcp:send(Socket,
 				binary_to_list(msg:write_msg(#msg_LockPlayer{
-					lock = 1}))),
-			loop(Socket, PlayerInfo, FrameNo, OnMsg);
+					lock = 1}))),	% quit the loop
+			OnMsg(quitAck);
+			%loop(Socket, PlayerInfo, FrameNo, OnMsg);
 
 		ping ->
 			%io:format("in ping~n"),

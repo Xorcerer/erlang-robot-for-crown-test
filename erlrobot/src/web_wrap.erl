@@ -1,6 +1,6 @@
 -module(web_wrap).
 -compile(export_all).
--include("../include/hades.hrl").
+-include("hades.hrl").
 
 version_tostr(Split) ->
 	{0, Main, Minor, Revision} = ?VERSION,

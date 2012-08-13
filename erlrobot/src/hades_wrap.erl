@@ -1,6 +1,6 @@
 -module(hades_wrap).
 -compile(export_all).
--include("../include/hades.hrl").
+-include("hades.hrl").
 -import(mochijson2, [decode/1]).
 
 -import(web_wrap,
@@ -20,7 +20,7 @@ register_user(UserName) ->
 		"invite_code=daydayup&form_email=" ++ UserName ++
 		"%40hi.com&form_password=hihihi&form_name=" ++ UserName),
 	{SessionId, SId, AId} = extract_cookies(),
-	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
+	{ok, {{"HTTP/1.1", 200, "OK"}, _, Result}} =
 		post_url("profile/register",
 			"accountid=" ++ AId ++
 			"&account%5Fid=" ++ AId ++
@@ -36,13 +36,15 @@ acceptable_tasks(Context) -> ok.
 %% by far, only return a single tid.
 my_tasks(Context) ->
 	{SessionId, SId, AId, UserId} = Context,
-	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
+	{ok, {{"HTTP/1.1", 200, "OK"}, _, Result}} =
 		get_url("task/mytask?client=flash&accountid=" ++ AId ++
 			"&userid=" ++ integer_to_list(UserId) ++
 			"&format=json&sessionid=" ++ SId ++
 			"&tag=" ++ integer_to_list(get_time_stamp())),
 	{struct, [{<<"my_task">>, [{struct, Props}]}]} = decode(Result),
 	{_, Tid} = lists:keyfind(<<"tid">>, 1, Props),
+	{_, Conditions} = lists:keyfind(<<"current">>, 1, Props),
+	io:format("conditions: ~p~n", [Conditions]),
 	Tid.
 
 get_game_server(Context) ->
@@ -84,7 +86,7 @@ accept_task(Context, Tid) ->
 			"&tid=" ++ integer_to_list(Tid) ++
 			"&client=flash&reduce%5Fcooldown=0&format=json&userid=" ++ integer_to_list(UserId) ++
 			"&sessionid=" ++ SId),
-	{struct, [{<<"res">>,<<"ok">>}|_]} = decode(Result),
+	{struct, [{<<"res">>, <<"ok">>}|_]} = decode(Result),
 	ok.
 
 get_map_table(Context, Tid) ->
@@ -108,7 +110,7 @@ jump_to_task(Context, Tid, GsId) ->
 			"&gsid=" ++ edoc_lib:escape_uri(GsId) ++
 			"&tid=" ++ integer_to_list(Tid) ++
 			"&format=json&sessionid=" ++ SId),
-	{struct, [{<<"res">>,<<"ok">>}|_]} = decode(Result),
+	{struct, [{<<"res">>, <<"ok">>}|_]} = decode(Result),
 	ok.
 
 %% todo: wrap the followings
@@ -132,7 +134,7 @@ visit_register() ->
 	get_url("static/game/res_" ++ VersionStr ++ "/res/equipment/fashi.xml"),
 	get_url("static/game/res_" ++ VersionStr ++ "/res/equipment/mushi.xml"),
 	get_url("static/game/res_" ++ VersionStr ++ "/res/equipment/common.xml"),
-	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
+	{ok, {{"HTTP/1.1", 200, "OK"}, _, Result}} =
 		post_url("profile/register",
 			"accountid=" ++ AId ++ "&account%5Fid=" ++ AId ++ "&gender=male&tag=" ++
 			integer_to_list(get_time_stamp()) ++

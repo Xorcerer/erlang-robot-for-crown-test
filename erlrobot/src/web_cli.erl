@@ -31,7 +31,7 @@ start() ->
 	ok.
 
 player(I) ->
-	UserName = "abq" ++ integer_to_list(I),
+	UserName = "acf" ++ integer_to_list(I),
 	Context = register_user(UserName),
 	{SessionId, SId, AId, UserId} = Context,
 	%io:format("new user id = ~p~n", [UserId]),
@@ -40,7 +40,7 @@ player(I) ->
 	GameServer = get_game_server(Context),
 	{Host, Port} = GameServer,
 	io:format("got game server location: host = ~p, port = ~p~n", [Host, Port]),
-	Self = self(),
+	ParentPid = self(),
 	%% todo: kill this process and its inner player process when needed
 	Pid0 = spawn(
 		fun() ->
@@ -59,9 +59,11 @@ player(I) ->
 								x = -1905.701, y = 1252.586, angle = 0.105}},
 							%% todo: we should have been waiting the player approaches the NPC
 							GSPlayerPid ! {task, Tid0, ?TASKSTATE_COMPLETE},
-							Self ! {self(), finished};
+							ParentPid ! {self(), finished};
 						quitAck ->
-							Self ! {self(), quitAck}
+							ParentPid ! {self(), quitAck};
+						_ ->
+							void
 					end
 				end)
 		end),
@@ -78,14 +80,18 @@ player(I) ->
 	GsId2 = get_map_table(Context, Tid2),
 	ok = jump_to_task(Context, Tid2, GsId2),
 	Pid0 ! quit,
+	io:format("wait quitAck"),
+
 	wait({Pid0, quitAck}),
+
+	io:format("after quitAck"),
 
 	GameServer2 = get_game_server(Context),
 	{Host2, Port2} = GameServer2,
 	{Triggers, Paths} = read_map("yewai2.grf"),	% todo: fix the hardcoded map name here
 	Pid2 = spawn(
 		fun() ->
-			GSPlayerPid = self(),
+			GSPlayerPid = self(),	% it is also Pid2
 			io:format("spawning cli:player 2"),
 			cli:player(Host, Port, SId, UserId,
 				fun(Msg) ->
@@ -100,12 +106,15 @@ player(I) ->
 								x = -1905.701, y = 1252.586, angle = 0.105}},
 							%% todo: we should have been waiting the player approaches the NPC
 							%GSPlayerPid ! {task, Tid2, ?TASKSTATE_COMPLETE},
-							Self ! {self(), moved};
-						quit ->
-							Self ! {self(), quit}
+							ParentPid ! {self(), moved};
+						quitAck ->
+							ParentPid ! {self(), quitAck};
+						_ ->
+							void
 					end
 				end)
 		end),
+	wait({Pid2, quitAck}),
 	Context.
 
 
