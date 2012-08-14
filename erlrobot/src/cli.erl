@@ -92,6 +92,7 @@ socket_loop(P, Socket) ->
 % todo: how to leave the server? just send LockPlayer {Lock = 1uy;} ?
 loop(Socket, PlayerInfo, FrameNo, OnMsg) ->
 	io:format("in main loop~n"),
+	OnMsg({logged, PlayerId}),
 	#playerInfo{
 		userId = UserId,
 		playerId = PlayerId,
@@ -162,7 +163,7 @@ loop(Socket, PlayerInfo, FrameNo, OnMsg) ->
 					x = X,
 					y = Y,
 					angle = Angle}},
-			OnMsg(Msg),
+			OnMsg({playerPose, #pose{x = X, y = Y, angle = Angle}}),
 			loop(Socket, PlayerInfo1, FrameNo, OnMsg);
 		#msg_CreatureDisappearNotif{
 			id = PlayerId} ->

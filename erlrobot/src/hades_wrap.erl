@@ -44,8 +44,14 @@ my_tasks(Context) ->
 	{struct, [{<<"my_task">>, [{struct, Props}]}]} = decode(Result),
 	{_, Tid} = lists:keyfind(<<"tid">>, 1, Props),
 	{_, Conditions} = lists:keyfind(<<"current">>, 1, Props),
+	Status = lists:map(
+		fun(Condition) ->
+			{_, Item} = lists:keyfind(<<"condition_item">>, 1, Condition),
+			{_, Count} = lists:keyfind(<<"condition_count">>, 1, Condition),
+			{Item, Count}
+		end, Conditions),
 	io:format("conditions: ~p~n", [Conditions]),
-	Tid.
+	{Tid, Status}.
 
 get_game_server(Context) ->
 	{SessionId, SId, AId, UserId} = Context,
@@ -75,7 +81,15 @@ finish_task(Context, Tid) ->
 	%% only extract one of the next tasks
 	{_, [{struct, AcceptableTaskB} | _]} = lists:keyfind(<<"accpetable_task">>, 1, Props),
 	{_, NextTid} = lists:keyfind(<<"tid">>, 1, AcceptableTaskB),
-	NextTid.
+	{_, Conditions} = lists:keyfind(<<"condition">>, 1, AcceptableTaskB),
+	Status = lists:map(
+		fun(Condition) ->
+			{_, Item} = lists:keyfind(<<"condition_item">>, 1, Condition),
+			{_, Count} = lists:keyfind(<<"condition_count">>, 1, Condition),
+			{Item, Count}
+		end, Conditions),
+	io:format("conditions: ~p~n", [Conditions]),
+	{NextTid, Status}.
 
 accept_task(Context, Tid) ->
 	{SessionId, SId, AId, UserId} = Context,
