@@ -4,6 +4,7 @@
 read_map(MapName) ->
 	{ok, S} = file:open(MapName, read),
 	{LinesTrigger, _} = string:to_integer(io:get_line(S, '')),
+	io:format("lines trigger = ~p~n", [LinesTrigger]),
 	Triggers = lists:map(
 		fun(_I) ->
 			[Id_S, X_S, Y_S] = string:tokens(io:get_line(S, ''), " \n"),
@@ -13,6 +14,7 @@ read_map(MapName) ->
 			{Id, {X, Y}}
 		end, lists:seq(1, LinesTrigger)),
 	{LinesPath, _} = string:to_integer(io:get_line(S, '')),
+	io:format("lines path = ~p~n", [LinesPath]),
 	Paths = lists:map(
 		fun(_I) ->
 			[Source_S, Target_S] = string:tokens(io:get_line(S, ''), " \n"),
