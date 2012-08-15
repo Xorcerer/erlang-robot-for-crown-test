@@ -85,13 +85,13 @@ socket_loop(P, Socket) ->
 	{ok, Buff} = gen_tcp:recv(Socket, MsgLen),
 	%io:format("in socket_loop, buff received~n"),
 	Msg = msg:read_msg(Buff, MsgId),
-	io:format("in socket_loop, msg read:~p~n", [Msg]),
+	%io:format("in socket_loop, msg read:~p~n", [Msg]),
 	P ! Msg,
 	socket_loop(P, Socket).
 
 % todo: how to leave the server? just send LockPlayer {Lock = 1uy;} ?
 loop(Socket, #playerInfo{userId = UserId, playerId = PlayerId} = PlayerInfo, FrameNo, OnMsg) ->
-	io:format("in main loop~n"),
+	%io:format("in main loop~n"),
 	OnMsg({logged, PlayerId}),
 	#playerInfo{
 		userId = UserId,
@@ -135,6 +135,10 @@ loop(Socket, #playerInfo{userId = UserId, playerId = PlayerId} = PlayerInfo, Fra
 					x = X,
 					y = Y,
 					angle = Angle}))),
+			loop(Socket, PlayerInfo, FrameNo, OnMsg);
+		{msg, Msg} ->
+			ok = gen_tcp:send(Socket,
+				binary_to_list(msg:write_msg(Msg))),
 			loop(Socket, PlayerInfo, FrameNo, OnMsg);
 		#msg_MoveNotif{
 			id = PlayerId,

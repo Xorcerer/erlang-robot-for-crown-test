@@ -15,7 +15,7 @@
 -define(EPSILON, 1.0e-5).
 
 -define(ATTACK_DIST, 100.0).
--define(SKILL_CD, 500.0).	% toxiphily
+-define(SKILL_CD, 500).	% toxiphily
 
 -define(TASKSTATE_UNTAKE, 0).
 -define(TASKSTATE_CANTAKE, 1).

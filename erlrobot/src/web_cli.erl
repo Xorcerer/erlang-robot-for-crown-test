@@ -1,6 +1,6 @@
 -module(web_cli).
--include("../include/records.hrl").
--include("../include/playerInfo.hrl").
+-include("records.hrl").
+-include("playerInfo.hrl").
 -export([start/0]).
 -import(hades_wrap,
 	[
@@ -21,6 +21,7 @@
 		sub_vec2d/2,
 		scale_vec2d/2,
 		norm_vec2d/1,
+		len_squared_vec2d/1,
 		len_vec2d/1,
 		dist_squared_vec2d/2,
 		dist_vec2d/2
@@ -41,7 +42,7 @@ start() ->
 	ok.
 
 player(I) ->
-	UserName = "act" ++ integer_to_list(I),
+	UserName = "ada" ++ integer_to_list(I),
 	io:format("username: ~p~n", [UserName]),
 	Context = register_user(UserName),
 	{_SessionId, SId, _AId, UserId} = Context,
@@ -125,7 +126,7 @@ player(I) ->
 							ParentPid ! {self(), PlayerPose};
 						#msg_CreatureAppearNotif{
 							id = Id,
-							userId = UserId,
+							userId = _,
 							x = X,
 							y = Y} ->
 							io:format("monster appear(userId:~p, id:~p, x:~p, y:~p)~n)", [UserId, Id, X, Y]),
@@ -188,6 +189,7 @@ player(I) ->
 	%% recursive lambda!
 	HandleTask2 =
 		fun(Mode, PlayerLoc, F) ->
+			%io:format("handle task2: mode=~p, playerloc=~p~n", [Mode, PlayerLoc]),
 			%% if there is no monster appears, traverse the trigger points
 			%% else, attack the first monster
 			case Mode of
@@ -264,14 +266,15 @@ player(I) ->
 					DistMonster = dist_vec2d(PlayerLoc, {TargetX, TargetY}),
 					if
 						DistMonster < ?ATTACK_DIST ->
-							Pid2 ! #msg_Casting{skillId = 4, skillSeq = 0, targetId = TargetId, x = 0.0, y = 0.0},
+							Pid2 ! {msg, #msg_Casting{skillId = 4, skillSeq = 0, targetId = TargetId, x = 0.0, y = 0.0}},
 							%% after cooldown, give it another attack
-							timer:sleep(?SKILL_CD)
+							timer:sleep(?SKILL_CD);
+						true -> void
 					end,	% if
 
 					receive
 						{Pid2, {monster, Id, MonX, MonY}} ->
-							F({attack, [{Id, MonX, MonY} | Monsters], TargetMonsterId}, PlayerLoc, F);
+							F({attack, false, [{Id, MonX, MonY} | Monsters], TargetMonsterId}, PlayerLoc, F);
 						{Pid2, {killed, Id}} ->
 							%% great! killed one enemy!
 							%% query the task status to see if the task is over

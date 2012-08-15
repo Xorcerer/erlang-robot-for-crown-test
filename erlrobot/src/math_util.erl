@@ -18,7 +18,8 @@
 		norm_vec2d/1,
 		len_squared_vec2d/1,
 		len_vec2d/1,
-		dist_squared_vec2d/2
+		dist_squared_vec2d/2,
+		dist_vec2d/2
 	]).
 
 %%
@@ -46,6 +47,9 @@ len_vec2d(Vec) ->
 
 dist_squared_vec2d(Vec1, Vec2) ->
 	len_squared_vec2d(sub_vec2d(Vec1, Vec2)).
+
+dist_vec2d(Vec1, Vec2) ->
+	math:sqrt(dist_squared_vec2d(Vec1, Vec2)).
 
 %%
 %% Local Functions
