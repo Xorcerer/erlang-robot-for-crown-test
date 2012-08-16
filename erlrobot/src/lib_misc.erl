@@ -31,12 +31,14 @@ unconsult(File, L) ->
 timer(Time, Fun) ->
 	receive
 		after Time ->
-			Fun(),
-			timer(Time, Fun)
+			R = Fun(),
+			if
+				R -> timer(Time, Fun);
+				true -> void
+			end
 	end.
 
 wait(Msg) ->
 	receive
-		Msg -> void;
-		_ -> wait(Msg)
+		Msg -> void
 	end.

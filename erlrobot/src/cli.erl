@@ -1,5 +1,11 @@
 -module(cli).
--compile(export_all).
+-export(
+	[
+		start/0,
+		player/0,
+		player_msg/4,
+		player/4
+	]).
 -include("records.hrl").
 -include("playerInfo.hrl").
 -import(msg, [write_msg/1, read_msg/2]).
@@ -15,7 +21,7 @@ player() ->
 	Port = flags:extract_int(port, 9527),
 	UserId = flags:extract_int(uid, 29921),
 	PlayerPid = self(),
-	player(Host, Port, "HELLO", UserId,
+	player({Host, Port}, "HELLO", UserId,
 		fun(Msg) ->
 			case Msg of
 				#msg_CreatureAppearNotif{
@@ -29,7 +35,8 @@ player() ->
 							timer(250,
 								fun() ->
 									%io:format("send internal move~n"),
-									PlayerPid ! {move, random}
+									PlayerPid ! {move, random},
+									true
 								end
 							)
 						end
@@ -39,7 +46,13 @@ player() ->
 			end
 		end).
 
-player(Host, Port, SessionId, UserId, OnMsg) ->
+player_msg(ParentPid, GameServer, SessionId, UserId) ->
+	player(GameServer, SessionId, UserId,
+		fun(Msg) ->
+			ParentPid ! {self(), Msg}
+		end).
+
+player({Host, Port}, SessionId, UserId, OnMsg) ->
 	{ok, Socket} = gen_tcp:connect(Host, Port,
 		[binary, {packet, 0}, {nodelay, true}, {active, false}]),
 	ok = gen_tcp:send(Socket,
