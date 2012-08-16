@@ -14,6 +14,7 @@
 
 -define(EPSILON, 1.0e-5).
 
+-define(NEAR_DIST, 10.0).
 -define(ATTACK_DIST, 100.0).
 -define(ATTACK_SKILL, 4).	% toxiphily
 -define(SKILL_CD, 500).

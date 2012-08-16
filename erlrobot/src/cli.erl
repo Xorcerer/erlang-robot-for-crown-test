@@ -47,9 +47,10 @@ player() ->
 		end).
 
 player_msg(ParentPid, GameServer, SessionId, UserId) ->
+	GSPid = self(),
 	player(GameServer, SessionId, UserId,
 		fun(Msg) ->
-			ParentPid ! {self(), Msg}
+			ParentPid ! {GSPid, Msg}
 		end).
 
 player({Host, Port}, SessionId, UserId, OnMsg) ->
@@ -141,7 +142,7 @@ loop(Socket, #playerInfo{userId = UserId, playerId = PlayerId} = PlayerInfo, Fra
 				x = X,
 				y = Y,
 				angle = Angle}} ->
-			%io:format("in move pose~n"),
+			io:format("in move pose (x=~p, y=~p)~n", [X, Y]),
 			ok = gen_tcp:send(Socket,
 				binary_to_list(msg:write_msg(#msg_Move{
 					state = 0,

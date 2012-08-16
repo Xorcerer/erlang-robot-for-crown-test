@@ -40,5 +40,6 @@ timer(Time, Fun) ->
 
 wait(Msg) ->
 	receive
-		Msg -> void
+		Msg -> void;
+		_ -> wait(Msg)
 	end.

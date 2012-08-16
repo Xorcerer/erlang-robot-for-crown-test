@@ -14,9 +14,9 @@
 %%
 -export(
 	[
-		task0/6,
-		task1/6,
-		task2/8
+		task0/5,
+		task1/5,
+		task2/7
 	]).
 
 %%%
@@ -52,110 +52,151 @@
 %%
 %% API Functions
 %%
-task0(ParentPid, GSPid, Context, TaskId, UserId, PlayerId) ->
-	do_task0(init, ParentPid, GSPid, Context, TaskId, UserId, PlayerId).
+task0(GSPid, Context, TaskId, UserId, PlayerId) ->
+	%io:format("task0, GSPid = ~p~n", [GSPid]),
+	do_task0(init, GSPid, Context, TaskId, UserId, PlayerId).
 
-task1(ParentPid, GSPid, Context, TaskId, UserId, PlayerId) ->
-	do_task1(init, ParentPid, GSPid, Context, TaskId, UserId, PlayerId).
+task1(GSPid, Context, TaskId, UserId, PlayerId) ->
+	%io:format("task1, GSPid = ~p~n", [GSPid]),
+	do_task1(init, GSPid, Context, TaskId, UserId, PlayerId).
 
-task2(ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, {Triggers, _Paths} = GameMap) ->
+task2(GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, {Triggers, _Paths} = GameMap) ->
 	{TrigId, _} = find_nearest_trigger(PlayerLoc, Triggers),
-	{_, {TrigX, TrigY} = TrigLoc} = lists:keyfind(TrigId, 1, Triggers),
+	{_, {TrigX, TrigY} = _TrigLoc} = lists:keyfind(TrigId, 1, Triggers),
 	GSPid ! {move, #pose{state = 0, x = TrigX, y = TrigY, angle = 0.0}},
-	do_task2({patrol, init, [TrigId], []}, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap).
+	do_task2({patrol, init, [TrigId], []}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap).
 
 %%
 %% Local Functions
 %%
-do_task0(Mode, ParentPid, GSPid, Context, TaskId, UserId, PlayerId) ->
-	receive
-		{GSPid, playerPose, #pose{}} ->
-			{X, Y} = ?Task0Loc,
-			GSPid ! {move, #pose{x = X, y = Y, angle = 0.0}},
-			do_task0(wait_move, ParentPid, GSPid, Context, TaskId, UserId, PlayerId);
-		{GSPid, #msg_MoveNotif{
-			id = PlayerId, x = X, y = Y}} ->
-			Dist = dist_vec2d({X, Y}, ?Task0Loc),
-			if
-				Dist < ?EPSILON ->
-					ParentPid ! {self(), finished};
-				true -> void
-			end
-	end.
-
-do_task1(Mode, ParentPid, GSPid, Context, TaskId, UserId, PlayerId) ->
+do_task0(Mode, GSPid, Context, TaskId, UserId, PlayerId) ->
 	case Mode of
 		init ->
-			{X, Y} = ?Task1Loc,
+			{X, Y} = ?Task0Loc,
+			%io:format("do_task0 send move (x=~p, y=~p)~n", [X, Y]),
 			GSPid ! {move, #pose{x = X, y = Y, angle = 0.0}},
-			do_task1(wait_move, ParentPid, GSPid, Context, TaskId, UserId, PlayerId);
-		wait_move ->
+			do_task0(wait, GSPid, Context, TaskId, UserId, PlayerId);
+		wait ->
 			receive
 				{GSPid, #msg_MoveNotif{
-					id = PlayerId, x = X, y = Y}} ->
-					Dist = dist_vec2d({X, Y}, ?Task1Loc),
+					id = PlayerId, x = X, y = Y}} = Msg ->
+					%io:format("do_task0 received msg: ~p~n", [Msg]),
+					Dist = dist_vec2d({X, Y}, ?Task0Loc),
 					if
-						Dist < ?EPSILON ->
-							ParentPid ! {self(), finished};
-						true -> void
+						Dist < ?NEAR_DIST ->
+							%io:format("quit do_task0~n"),
+							void;	% quit the loop
+						true ->
+							%io:format("do_task0, not near enough?~n"),
+							do_task0(wait, GSPid, Context, TaskId, UserId, PlayerId)
 					end
 			end
 	end.
 
-do_task2(Mode, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, {Triggers, Paths} = GameMap) ->
+do_task1(Mode, GSPid, Context, TaskId, UserId, PlayerId) ->
 	case Mode of
-		{patrol, SubMode, [H|T] = TriggerIds, VisitedTriggerIds} ->
+		init ->
+			{X, Y} = ?Task1Loc,
+			%io:format("do_task1 send move (x=~p, y=~p)~n", [X, Y]),
+			GSPid ! {move, #pose{x = X, y = Y, angle = 0.0}},
+			do_task1(wait, GSPid, Context, TaskId, UserId, PlayerId);
+		wait ->
+			receive
+				{GSPid, #msg_MoveNotif{
+					id = PlayerId, x = X, y = Y}} = Msg ->
+					%io:format("do_task1 received msg: ~p~n", [Msg]),
+					Dist = dist_vec2d({X, Y}, ?Task1Loc),
+					if
+						Dist < ?NEAR_DIST ->
+							%io:format("quit do_task1~n"),
+							void;	% quit the loop
+						true ->
+							%io:format("do_task1, not near enough?~n"),
+							do_task1(wait, GSPid, Context, TaskId, UserId, PlayerId)
+					end
+			end
+	end.
+
+do_task2(Mode, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, {Triggers, Paths} = GameMap) ->
+	case Mode of
+		{patrol, SubMode, TriggerIds, VisitedTriggerIds} ->
 			case SubMode of
 				init ->
-					IsVisited = lists:member(H, VisitedTriggerIds),
+					[TrigId | Ts] = TriggerIds,
+					IsVisited = lists:member(TrigId, VisitedTriggerIds),
 					if
 						IsVisited ->
-							do_task2({patrol, init, T, VisitedTriggerIds}, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap);
+							do_task2({patrol, init, Ts, VisitedTriggerIds}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap);
 						true ->
-							{_, {TrigX, TrigY} = _Trig} = lists:keyfind(H, 1, Triggers),
+							{_, {TrigX, TrigY} = _Trig} = lists:keyfind(TrigId, 1, Triggers),
+							io:format("do_task2 send move x=~p, y=~p~n", [TrigX, TrigY]),
 							GSPid ! {move, #pose{state = 0, x = TrigX, y = TrigY, angle = 0.0}},
-							%timer:sleep(?MOVE_CD),
+
+							%% pop H, push H's children
+							NeighborIds = get_trigger_neighbor_ids(TrigId, Paths),
+							TriggerIds1 = lists:append(NeighborIds, Ts),
+
 							%% wait for arriving the target trigger point
-							do_task2({patrol, wait, TriggerIds, VisitedTriggerIds}, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap)
+							do_task2({patrol, wait, TriggerIds1, [TrigId | VisitedTriggerIds]}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap)
 					end;
 				wait ->
 					receive
 						{GSPid, #msg_MoveNotif{
 							id = PlayerId, x = X, y = Y}} ->
+							[VTrigId | Vs] = VisitedTriggerIds,
 							PlayerLoc1 = {X, Y},
-							{_, {TrigX, TrigY} = TrigLoc} = lists:keyfind(H, 1, Triggers),
+							{_, {_TrigX, _TrigY} = TrigLoc} = lists:keyfind(VTrigId, 1, Triggers),
 							Dist = dist_vec2d(PlayerLoc1, TrigLoc),
 							if
-								Dist < ?EPSILON ->
-									do_task2({patrol, init, T, [H|VisitedTriggerIds]}, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc1, GameMap);
+								Dist < ?NEAR_DIST ->
+									timer:sleep(?MOVE_CD),
+									io:format("do_task2 arrived x=~p, y=~p~n", [X, Y]),
+									do_task2({patrol, init, TriggerIds, VisitedTriggerIds}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc1, GameMap);
 								true ->
-									do_task2({patrol, wait, TriggerIds, VisitedTriggerIds}, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc1, GameMap)
+									do_task2({patrol, wait, TriggerIds, VisitedTriggerIds}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc1, GameMap)
 							end;
-						{GSPid, {monster, MonId, MonX, MonY}} ->
-							do_task2({attack, init, [{MonId, {MonX, MonY}}], MonId}, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap)
+						{GSPid, #msg_CreatureAppearNotif{
+							id = MonId,
+							userId = _MonUserId,
+							x = MonX,
+							y = MonY}} ->
+							io:format("do_task2: discover a monster, monId=~p, x=~p, y=~p", [MonId, MonX, MonY]),
+							do_task2({attack, init, [{MonId, {MonX, MonY}}], MonId}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap)
 					end
 			end;
 		{attack, SubMode, Monsters, TargetMonsterId} ->
 			case SubMode of
 				init ->
+					io:format("do_task2: attack init monsters=~p, target=~p~n", [Monsters, TargetMonsterId]),
 					{_, MonLoc} = lists:keyfind(TargetMonsterId, 1, Monsters),
 					{TrigId, _} = find_nearest_trigger(MonLoc, Triggers),
 					{LocX, LocY} = get_attack_loc(TrigId, GameMap),
+					io:format("do_task2 send attack move x=~p, y=~p~n", [LocX, LocY]),
 					GSPid ! {move, #pose{x = LocX, y = LocY, angle = 0.0}},
-					do_task2({attack, {wait, undefined}, Monsters, TargetMonsterId}, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap);
+					do_task2({attack, {wait, undefined}, Monsters, TargetMonsterId}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap);
 				{wait, AttackPid} ->
 					receive
-						{GSPid, {monster, MonId, MonX, MonY}} ->
+						{GSPid, #msg_CreatureAppearNotif{
+							id = MonId,
+							userId = _MonUserId,
+							x = MonX,
+							y = MonY}} ->
+							io:format("do_task2: discover a monster when waiting attack, monId=~p, x=~p, y=~p", [MonId, MonX, MonY]),
 							R = lists:keyfind(MonId, 1, Monsters),
 							case R of
-								false -> do_task2({attack, {wait, AttackPid}, [{MonId, {MonX, MonY}} | Monsters], TargetMonsterId}, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap);
-								_ -> do_task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId}, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap)
+								false ->
+									io:format("do_task2: this monster(~p) is new~n", [MonId]),
+									do_task2({attack, {wait, AttackPid}, [{MonId, {MonX, MonY}} | Monsters], TargetMonsterId}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap);
+								_ ->
+									do_task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap)
 							end;
-						{GSPid, {killed, MonId} = Msg} ->
+						{GSPid, #msg_CreatureDisappearNotif{id = MonId}} = Msg ->
 							io:format("monster killed id=~p~n", [MonId]),
 							case AttackPid of
 								undefined -> void;
-								_ -> AttackPid ! {self(), Msg}
+								_ ->
+									io:format("do_task2 notify its timer(~p) monster(~p) killed~n", [AttackPid, MonId]),
+									AttackPid ! {self(), Msg}
 							end,
 							%% great! killed one enemy!
 							%% query the task status to see if the task is over
@@ -163,7 +204,7 @@ do_task2(Mode, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, {
 							IsTaskOver = task_is_over(Status),
 							if
 								IsTaskOver ->
-									ParentPid ! {self(), finished};	% and then quit this loop itself
+									void;	% and then quit this loop itself
 								true ->
 									%% since I have only attacked the TargetMonster, so this Id must be TargetMonster
 									Monsters1 = lists:keydelete(MonId, 1, Monsters),
@@ -172,11 +213,11 @@ do_task2(Mode, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, {
 										[] ->
 											%% start to patrol from the nearest trigger point
 											{NearTrigId, _} = find_nearest_trigger(PlayerLoc, Triggers),
-											do_task2({patrol, init, [NearTrigId], []}, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap);
-										[{MonId1, _, _} |_] ->
+											do_task2({patrol, init, [NearTrigId], []}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap);
+										[{MonId1, _} |_] ->
 											io:format("plan to attack another monster id=~p~n", [MonId1]),
 											%% plan to attack another monster
-											do_task2({attack, init, Monsters1, MonId1}, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap)
+											do_task2({attack, init, Monsters1, MonId1}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap)
 									end
 							end;
 						{GSPid, #msg_MoveNotif{
@@ -191,20 +232,20 @@ do_task2(Mode, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, {
 									AttackLoc = get_attack_loc(TrigId, GameMap),
 									Dist = dist_vec2d(AttackLoc, CLoc),
 									if
-										Dist < ?ATTACK_DIST ->
+										Dist < ?NEAR_DIST ->
 											GSPid ! {msg, #msg_Casting{skillId = ?ATTACK_SKILL, skillSeq = 0, targetId = TargetMonsterId, x = 0.0, y = 0.0}},
 											TaskPid = self(),
 											AttackPid1 = spawn(
 												fun() ->
 													attack_monster(TaskPid, GSPid, TargetMonsterId)
 												end),
-											do_task2({attack, {wait, AttackPid1}, Monsters, TargetMonsterId}, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap);
+											do_task2({attack, {wait, AttackPid1}, Monsters, TargetMonsterId}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap);
 										true ->
-											do_task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId}, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap)
+											do_task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap)
 									end;
 								true ->
-									Monsters1 = lists:keyreplace(Id, 1, Monsters, {Id, CX, CY}),
-									do_task2({attack, {wait, AttackPid}, Monsters1, TargetMonsterId}, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap)
+									Monsters1 = lists:keyreplace(Id, 1, Monsters, {Id, {CX, CY}}),
+									do_task2({attack, {wait, AttackPid}, Monsters1, TargetMonsterId}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap)
 							end
 					end
 			end
@@ -212,7 +253,8 @@ do_task2(Mode, ParentPid, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, {
 
 attack_monster(TaskPid, GSPid, MonsterId) ->
 	receive
-		{TaskPid, {killed, MonId}} ->
+		{TaskPid, {killed, _MonId}} ->
+			io:format("attack_monster received monster(~p) killed!~n", [_MonId]),
 			void	% quit the loop
 	after
 		?SKILL_CD ->
