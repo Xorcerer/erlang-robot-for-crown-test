@@ -42,7 +42,7 @@ start() ->
 	ok.
 
 player(I) ->
-	UserName = "ada" ++ integer_to_list(I),
+	UserName = "ade" ++ integer_to_list(I),
 	io:format("username: ~p~n", [UserName]),
 	Context = register_user(UserName),
 	{_SessionId, SId, _AId, UserId} = Context,
@@ -204,6 +204,7 @@ player(I) ->
 						true ->
 							{_, {TrigX, TrigY} = _Trig} = lists:keyfind(H, 1, Triggers),
 							Pid2 ! {move, #pose{state = 0, x = TrigX, y = TrigY, angle = 0.0}},
+							timer:sleep(?MOVE_CD),
 							%% wait for arriving the target trigger point
 							F({patrol, false, TriggerStack, VisitedTriggers}, PlayerLoc, F)
 					end;
@@ -267,6 +268,7 @@ player(I) ->
 					if
 						DistMonster < ?ATTACK_DIST ->
 							Pid2 ! {msg, #msg_Casting{skillId = 4, skillSeq = 0, targetId = TargetId, x = 0.0, y = 0.0}},
+							io:format("attack targetId=~p~n", [TargetId]),
 							%% after cooldown, give it another attack
 							timer:sleep(?SKILL_CD);
 						true -> void
@@ -274,8 +276,14 @@ player(I) ->
 
 					receive
 						{Pid2, {monster, Id, MonX, MonY}} ->
-							F({attack, false, [{Id, MonX, MonY} | Monsters], TargetMonsterId}, PlayerLoc, F);
+							%% avoid duplicate monster
+							R = lists:keyfind(Id, 1, Monsters),
+							case R of
+								false -> F({attack, false, [{Id, MonX, MonY} | Monsters], TargetMonsterId}, PlayerLoc, F);
+								_ -> F({attack, false, Monsters, TargetMonsterId}, PlayerLoc, F)
+							end;
 						{Pid2, {killed, Id}} ->
+							io:format("monster killed id=~p~n", [Id]),
 							%% great! killed one enemy!
 							%% query the task status to see if the task is over
 							{_, Status} = my_tasks(Context),
@@ -293,6 +301,7 @@ player(I) ->
 											{NearTrigId, _} = FindNearestTrigger(PlayerLoc),
 											F({patrol, true, [NearTrigId], []}, PlayerLoc, F);
 										[{MonId, _, _} |_] ->
+											io:format("plan to attack another monster id=~p~n", [MonId]),
 											%% plan to attack another monster
 											F({attack, true, Monsters1, MonId}, PlayerLoc, F)
 									end
