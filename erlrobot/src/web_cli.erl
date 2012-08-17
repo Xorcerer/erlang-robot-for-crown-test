@@ -49,7 +49,7 @@ wait_player_loc(GSPid) ->
 	end.
 
 player(I) ->
-	UserName = "aeo" ++ integer_to_list(I),
+	UserName = "aes" ++ integer_to_list(I),
 	io:format("username: ~p~n", [UserName]),
 	Context = register_user(UserName),
 	{_SessionId, SId, _AId, UserId} = Context,

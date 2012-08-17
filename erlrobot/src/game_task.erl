@@ -194,7 +194,7 @@ do_task2(Mode, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, {Triggers, P
 							do_task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId, AttackLoc},
 								GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap)
 					end;
-				{GSPid, #msg_CreatureDisappearNotif{id = MonId}} = Msg ->
+				{GSPid, #msg_CreatureDisappearNotif{id = MonId}} = _Msg ->
 					io:format("monster killed id=~p~n", [MonId]),
 					case AttackPid of
 						undefined -> void;
@@ -202,7 +202,7 @@ do_task2(Mode, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, {Triggers, P
 							if
 								MonId == TargetMonsterId ->
 									io:format("do_task2 notify its timer(~p) monster(~p) killed~n", [AttackPid, MonId]),
-									AttackPid ! {self(), Msg};
+									AttackPid ! {self(), {killed, MonId}};
 								true -> void
 							end
 					end,
@@ -244,15 +244,21 @@ do_task2(Mode, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, {Triggers, P
 							Dist = dist_vec2d(AttackLoc, CLoc),
 							if
 								Dist < ?NEAR_DIST ->
-									io:format("do_task2 in attack arrived loc=~p~n", [CLoc]),
-									GSPid ! {msg, #msg_Casting{skillId = ?ATTACK_SKILL, skillSeq = 0, targetId = TargetMonsterId, x = 0.0, y = 0.0}},
-									TaskPid = self(),
-									AttackPid1 = spawn(
-										fun() ->
-											attack_monster(TaskPid, GSPid, TargetMonsterId)
-										end),
-									do_task2({attack, {wait, AttackPid1}, Monsters, TargetMonsterId, AttackLoc},
-										GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap);
+									case AttackPid of
+										undefined ->
+											io:format("do_task2 in attack arrived loc=~p~n", [CLoc]),
+											GSPid ! {msg, #msg_Casting{skillId = ?ATTACK_SKILL, skillSeq = 0, targetId = TargetMonsterId, x = 0.0, y = 0.0}},
+											TaskPid = self(),
+											AttackPid1 = spawn(
+												fun() ->
+													attack_monster(TaskPid, GSPid, TargetMonsterId)
+												end),
+											do_task2({attack, {wait, AttackPid1}, Monsters, TargetMonsterId, AttackLoc},
+												GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap);
+										_ ->
+											do_task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId, AttackLoc},
+												GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap)
+									end;
 								true ->
 									io:format("do_task2 in attack not near enough, dest=~p, player loc=~p~n", [AttackLoc, CLoc]),
 									do_task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId, AttackLoc},
@@ -281,6 +287,7 @@ attack_monster(TaskPid, GSPid, MonsterId) ->
 			void	% quit the loop
 	after
 		?SKILL_CD ->
+			io:format("attack_monster send casting to monster(~p)~n", [MonsterId]),
 			GSPid ! {msg, #msg_Casting{skillId = ?ATTACK_SKILL, skillSeq = 0, targetId = MonsterId, x = 0.0, y = 0.0}},
 			attack_monster(TaskPid, GSPid, MonsterId)
 	end.
