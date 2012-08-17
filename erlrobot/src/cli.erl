@@ -71,7 +71,7 @@ player({Host, Port}, SessionId, UserId, OnMsg) ->
 	spawn(
 		fun() ->
 			link(PlayerPid),
-			timer(1000,
+			timer(3000,
 				fun() ->
 					io:format("send internal ping~n"),
 					PlayerPid ! ping,

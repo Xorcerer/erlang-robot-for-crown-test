@@ -29,7 +29,7 @@ start() ->
 			{cookies, enabled}
 		]),
 
-	N = 1,
+	N = 2,
 	Result = pmap(fun player/1, lists:seq(1, N)),
 	inets:stop(),
 	io:format("result = ~p~n", [Result]),
@@ -49,7 +49,15 @@ wait_player_loc(GSPid) ->
 	end.
 
 player(I) ->
-	UserName = "aes" ++ integer_to_list(I),
+	{ok, HttpPid} = inets:start(httpc, [{profile, self()}]),
+	io:format("inets:start, pid=~p~n", [HttpPid]),
+	
+	httpc:set_options(
+		[
+			{cookies, enabled}
+		], self()),
+
+	UserName = "aew" ++ integer_to_list(I),
 	io:format("username: ~p~n", [UserName]),
 	Context = register_user(UserName),
 	{_SessionId, SId, _AId, UserId} = Context,
@@ -121,6 +129,7 @@ player(I) ->
 	{_TaskId3, _Status3} = finish_task(Context, TaskId2),
 	GSPid2 ! {msg, #msg_Task{taskId = TaskId2, taskState = ?TASKSTATE_COMPLETE}},
 
+	inets:stop(httpc, self()),
 	io:format("great! task2 finished!!~n"),
 	ok.
 

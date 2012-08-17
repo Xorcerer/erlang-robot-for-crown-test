@@ -17,8 +17,8 @@
 -define(NEAR_DIST, 10.0).
 -define(ATTACK_DIST, 100.0).
 -define(ATTACK_SKILL, 4).	% toxiphily
--define(SKILL_CD, 10).
--define(MOVE_CD, 200).	% rest a period of time after a move request
+-define(SKILL_CD, 2000).
+-define(MOVE_CD, 2000).	% rest a period of time after a move request
 
 -define(TASKSTATE_UNTAKE, 0).
 -define(TASKSTATE_CANTAKE, 1).

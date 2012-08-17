@@ -21,10 +21,10 @@ register_user(UserName) ->
 		post_url("profile/register",
 			"accountid=" ++ AId ++
 			"&account%5Fid=" ++ AId ++
-			"&name=xxx&role=warrior&camp=0&idcard=1234345656dfdf&client=flash&tag=" ++
+			"&name=xxx&role=master&camp=0&idcard=1234345656dfdf&client=flash&tag=" ++
 			integer_to_list(get_time_stamp()) ++
 			"&format=json&userid=0&sessionid=" ++ SId ++
-			"&gender=male"),
+			"&gender=female"),
 	{struct, [{<<"res">>, <<"ok">>}, {<<"userid">>, UserId}]} = decode(Result),
 	{SessionId, SId, AId, UserId}.
 
