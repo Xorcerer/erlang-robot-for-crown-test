@@ -12,7 +12,7 @@
 		get_time_stamp/0
 	]).
 
-register_user(UserName) ->
+register_user(UserName, UserNo) ->
 	post_url("account/signup",
 		"invite_code=daydayup&form_email=" ++ UserName ++
 		"%40hi.com&form_password=hihihi&form_name=" ++ UserName),
@@ -26,13 +26,13 @@ register_user(UserName) ->
 			"&format=json&userid=0&sessionid=" ++ SId ++
 			"&gender=female"),
 	{struct, [{<<"res">>, <<"ok">>}, {<<"userid">>, UserId}]} = decode(Result),
-	{SessionId, SId, AId, UserId}.
+	{UserNo, SessionId, SId, AId, UserId}.
 
 %acceptable_tasks(_Context) -> ok.
 
 %% by far, only return a single tid.
 my_tasks(Context) ->
-	{_SessionId, SId, AId, UserId} = Context,
+	{_UserNo, _SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1", 200, "OK"}, _, Result}} =
 		get_url("task/mytask?client=flash&accountid=" ++ AId ++
 			"&userid=" ++ integer_to_list(UserId) ++
@@ -47,11 +47,11 @@ my_tasks(Context) ->
 			{_, Count} = lists:keyfind(<<"condition_count">>, 1, Condition),
 			{Item, Count}
 		end, Conditions),
-	io:format("conditions: ~p~n", [Conditions]),
+	io:format("~p: conditions: ~p~n", [_UserNo, Conditions]),
 	{Tid, Status}.
 
 get_game_server(Context) ->
-	{_SessionId, SId, AId, UserId} = Context,
+	{_UserNo, _SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		get_url("profile/locate?accountid=" ++ AId ++
 			"&tag=" ++ integer_to_list(get_time_stamp()) ++
@@ -66,7 +66,7 @@ get_game_server(Context) ->
 	{Host, Port}.
 
 finish_task(Context, Tid) ->
-	{_SessionId, SId, AId, UserId} = Context,
+	{_UserNo, _SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		post_url("task/finish",
 			"accountid=" ++ AId ++
@@ -85,7 +85,7 @@ finish_task(Context, Tid) ->
 			{_, Count} = lists:keyfind(<<"condition_count">>, 1, Condition),
 			{Item, Count}
 		end, Conditions),
-	io:format("conditions: ~p~n", [Conditions]),
+	io:format("~p: conditions: ~p~n", [_UserNo, Conditions]),
 	{NextTid, Status}.
 
 task_is_over(Status) ->
@@ -94,7 +94,7 @@ task_is_over(Status) ->
 	
 
 accept_task(Context, Tid) ->
-	{_SessionId, SId, AId, UserId} = Context,
+	{_UserNo, _SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		post_url("task/accept",
 			"accountid=" ++ AId ++
@@ -106,7 +106,7 @@ accept_task(Context, Tid) ->
 	ok.
 
 get_map_table(Context, Tid) ->
-	{_SessionId, SId, AId, UserId} = Context,
+	{_UserNo, _SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		get_url("scene/get_map_table_list?accountid=" ++ AId ++
 			"&userid=" ++ integer_to_list(UserId) ++
@@ -117,7 +117,7 @@ get_map_table(Context, Tid) ->
 	 binary_to_list(GsIdB).
 
 jump_to_task(Context, Tid, GsId) ->
-	{_SessionId, SId, AId, UserId} = Context,
+	{_UserNo, _SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		post_url("scene/jump_to_task_location",
 			"accountid=" ++ AId ++

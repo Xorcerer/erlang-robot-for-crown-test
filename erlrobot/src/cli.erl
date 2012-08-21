@@ -71,7 +71,7 @@ player({Host, Port}, SessionId, UserId, OnMsg) ->
 	spawn(
 		fun() ->
 			link(PlayerPid),
-			timer(3000,
+			timer(30000,
 				fun() ->
 					io:format("send internal ping~n"),
 					PlayerPid ! ping,
@@ -143,7 +143,7 @@ loop(Socket, #playerInfo{userId = UserId, playerId = PlayerId} = PlayerInfo, Fra
 				x = X,
 				y = Y,
 				angle = Angle}} ->
-			io:format("in move pose (x=~p, y=~p)~n", [X, Y]),
+			%io:format("in move pose (x=~p, y=~p)~n", [X, Y]),
 			ok = gen_tcp:send(Socket,
 				binary_to_list(msg:write_msg(#msg_Move{
 					state = 0,
