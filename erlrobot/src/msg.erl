@@ -1,6 +1,6 @@
 -module(msg).
 -export([write_msg/1, read_msg/2]).
--include("../include/records.hrl").
+-include("records.hrl").
 -import(msg_reader, [read_str/1, read_byte/1, read_short/1, read_int/1, read_int1/1, read_single/1]).
 -import(msg_writer, [write_str/2, write_byte/2, write_short/2, write_int/2, write_single/2]).
 
@@ -510,7 +510,7 @@ write_msg(Msg) ->
             #msg_MoveEquipAck{
                 errorId = ErrorId,
                 equipmentId = EquipmentId,
-                iconId = IconId,
+                name = Name,
                 equipmentRes = EquipmentRes,
                 position = Position,
                 itemType = ItemType,
@@ -524,7 +524,7 @@ write_msg(Msg) ->
                     list_to_binary([
                         msg_writer:write_uint(ErrorId),
                         msg_writer:write_str(EquipmentId),
-                        msg_writer:write_str(IconId),
+                        msg_writer:write_str(Name),
                         msg_writer:write_str(EquipmentRes),
                         msg_writer:write_byte(Position),
                         msg_writer:write_byte(ItemType),
@@ -537,7 +537,7 @@ write_msg(Msg) ->
             #msg_MoveEquipNotif{
                 ownerId = OwnerId,
                 equipmentId = EquipmentId,
-                iconId = IconId,
+                name = Name,
                 equipmentRes = EquipmentRes,
                 position = Position,
                 itemType = ItemType,
@@ -551,7 +551,7 @@ write_msg(Msg) ->
                     list_to_binary([
                         msg_writer:write_uint(OwnerId),
                         msg_writer:write_str(EquipmentId),
-                        msg_writer:write_str(IconId),
+                        msg_writer:write_str(Name),
                         msg_writer:write_str(EquipmentRes),
                         msg_writer:write_byte(Position),
                         msg_writer:write_byte(ItemType),
@@ -580,7 +580,7 @@ write_msg(Msg) ->
             #msg_UpdatedEquipNotif{
                 ownerId = OwnerId,
                 equipmentId = EquipmentId,
-                iconId = IconId,
+                name = Name,
                 equipmentRes = EquipmentRes,
                 position = Position,
                 itemType = ItemType,
@@ -594,7 +594,7 @@ write_msg(Msg) ->
                     list_to_binary([
                         msg_writer:write_uint(OwnerId),
                         msg_writer:write_str(EquipmentId),
-                        msg_writer:write_str(IconId),
+                        msg_writer:write_str(Name),
                         msg_writer:write_str(EquipmentRes),
                         msg_writer:write_byte(Position),
                         msg_writer:write_byte(ItemType),
@@ -618,7 +618,7 @@ write_msg(Msg) ->
             #msg_ListEquipAck{
                 ownerId = OwnerId,
                 equipmentId = EquipmentId,
-                iconId = IconId,
+                name = Name,
                 equipmentRes = EquipmentRes,
                 position = Position,
                 itemType = ItemType,
@@ -632,7 +632,7 @@ write_msg(Msg) ->
                     list_to_binary([
                         msg_writer:write_uint(OwnerId),
                         msg_writer:write_str(EquipmentId),
-                        msg_writer:write_str(IconId),
+                        msg_writer:write_str(Name),
                         msg_writer:write_str(EquipmentRes),
                         msg_writer:write_byte(Position),
                         msg_writer:write_byte(ItemType),
@@ -645,7 +645,7 @@ write_msg(Msg) ->
             #msg_ListEquipNotif{
                 ownerId = OwnerId,
                 equipmentId = EquipmentId,
-                iconId = IconId,
+                name = Name,
                 equipmentRes = EquipmentRes,
                 position = Position,
                 itemType = ItemType,
@@ -659,7 +659,7 @@ write_msg(Msg) ->
                     list_to_binary([
                         msg_writer:write_uint(OwnerId),
                         msg_writer:write_str(EquipmentId),
-                        msg_writer:write_str(IconId),
+                        msg_writer:write_str(Name),
                         msg_writer:write_str(EquipmentRes),
                         msg_writer:write_byte(Position),
                         msg_writer:write_byte(ItemType),
@@ -1189,7 +1189,7 @@ read_msg(Buff, MsgId) ->
         ?MSG_MoveEquipAck ->
             {ErrorId, Buff1} = msg_reader:read_uint(Buff),
             {EquipmentId, Buff2} = msg_reader:read_str(Buff1),
-            {IconId, Buff3} = msg_reader:read_str(Buff2),
+            {Name, Buff3} = msg_reader:read_str(Buff2),
             {EquipmentRes, Buff4} = msg_reader:read_str(Buff3),
             {Position, Buff5} = msg_reader:read_byte(Buff4),
             {ItemType, Buff6} = msg_reader:read_byte(Buff5),
@@ -1201,7 +1201,7 @@ read_msg(Buff, MsgId) ->
             #msg_MoveEquipAck{
                 errorId = ErrorId,
                 equipmentId = EquipmentId,
-                iconId = IconId,
+                name = Name,
                 equipmentRes = EquipmentRes,
                 position = Position,
                 itemType = ItemType,
@@ -1213,7 +1213,7 @@ read_msg(Buff, MsgId) ->
         ?MSG_MoveEquipNotif ->
             {OwnerId, Buff1} = msg_reader:read_uint(Buff),
             {EquipmentId, Buff2} = msg_reader:read_str(Buff1),
-            {IconId, Buff3} = msg_reader:read_str(Buff2),
+            {Name, Buff3} = msg_reader:read_str(Buff2),
             {EquipmentRes, Buff4} = msg_reader:read_str(Buff3),
             {Position, Buff5} = msg_reader:read_byte(Buff4),
             {ItemType, Buff6} = msg_reader:read_byte(Buff5),
@@ -1225,7 +1225,7 @@ read_msg(Buff, MsgId) ->
             #msg_MoveEquipNotif{
                 ownerId = OwnerId,
                 equipmentId = EquipmentId,
-                iconId = IconId,
+                name = Name,
                 equipmentRes = EquipmentRes,
                 position = Position,
                 itemType = ItemType,
@@ -1247,7 +1247,7 @@ read_msg(Buff, MsgId) ->
         ?MSG_UpdatedEquipNotif ->
             {OwnerId, Buff1} = msg_reader:read_uint(Buff),
             {EquipmentId, Buff2} = msg_reader:read_str(Buff1),
-            {IconId, Buff3} = msg_reader:read_str(Buff2),
+            {Name, Buff3} = msg_reader:read_str(Buff2),
             {EquipmentRes, Buff4} = msg_reader:read_str(Buff3),
             {Position, Buff5} = msg_reader:read_byte(Buff4),
             {ItemType, Buff6} = msg_reader:read_byte(Buff5),
@@ -1259,7 +1259,7 @@ read_msg(Buff, MsgId) ->
             #msg_UpdatedEquipNotif{
                 ownerId = OwnerId,
                 equipmentId = EquipmentId,
-                iconId = IconId,
+                name = Name,
                 equipmentRes = EquipmentRes,
                 position = Position,
                 itemType = ItemType,
@@ -1279,7 +1279,7 @@ read_msg(Buff, MsgId) ->
         ?MSG_ListEquipAck ->
             {OwnerId, Buff1} = msg_reader:read_uint(Buff),
             {EquipmentId, Buff2} = msg_reader:read_str(Buff1),
-            {IconId, Buff3} = msg_reader:read_str(Buff2),
+            {Name, Buff3} = msg_reader:read_str(Buff2),
             {EquipmentRes, Buff4} = msg_reader:read_str(Buff3),
             {Position, Buff5} = msg_reader:read_byte(Buff4),
             {ItemType, Buff6} = msg_reader:read_byte(Buff5),
@@ -1291,7 +1291,7 @@ read_msg(Buff, MsgId) ->
             #msg_ListEquipAck{
                 ownerId = OwnerId,
                 equipmentId = EquipmentId,
-                iconId = IconId,
+                name = Name,
                 equipmentRes = EquipmentRes,
                 position = Position,
                 itemType = ItemType,
@@ -1303,7 +1303,7 @@ read_msg(Buff, MsgId) ->
         ?MSG_ListEquipNotif ->
             {OwnerId, Buff1} = msg_reader:read_uint(Buff),
             {EquipmentId, Buff2} = msg_reader:read_str(Buff1),
-            {IconId, Buff3} = msg_reader:read_str(Buff2),
+            {Name, Buff3} = msg_reader:read_str(Buff2),
             {EquipmentRes, Buff4} = msg_reader:read_str(Buff3),
             {Position, Buff5} = msg_reader:read_byte(Buff4),
             {ItemType, Buff6} = msg_reader:read_byte(Buff5),
@@ -1315,7 +1315,7 @@ read_msg(Buff, MsgId) ->
             #msg_ListEquipNotif{
                 ownerId = OwnerId,
                 equipmentId = EquipmentId,
-                iconId = IconId,
+                name = Name,
                 equipmentRes = EquipmentRes,
                 position = Position,
                 itemType = ItemType,

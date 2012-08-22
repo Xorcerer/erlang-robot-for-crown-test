@@ -1,6 +1,6 @@
 -module(hades_wrap).
 -compile(export_all).
--include("../include/hades.hrl").
+-include("hades.hrl").
 -import(mochijson2, [decode/1]).
 
 -import(web_wrap,
@@ -12,41 +12,46 @@
 		get_time_stamp/0
 	]).
 
-register_user(UserName) ->
-	VersionStr = version_tostr("_"),
-	VersionStrDot = version_tostr("."),
-
+register_user(UserName, UserNo) ->
 	post_url("account/signup",
 		"invite_code=daydayup&form_email=" ++ UserName ++
 		"%40hi.com&form_password=hihihi&form_name=" ++ UserName),
 	{SessionId, SId, AId} = extract_cookies(),
-	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
+	{ok, {{"HTTP/1.1", 200, "OK"}, _, Result}} =
 		post_url("profile/register",
 			"accountid=" ++ AId ++
 			"&account%5Fid=" ++ AId ++
-			"&name=xxx&role=warrior&camp=0&idcard=1234345656dfdf&client=flash&tag=" ++
+			"&name=xxx&role=master&camp=0&idcard=1234345656dfdf&client=flash&tag=" ++
 			integer_to_list(get_time_stamp()) ++
 			"&format=json&userid=0&sessionid=" ++ SId ++
-			"&gender=male"),
+			"&gender=female"),
 	{struct, [{<<"res">>, <<"ok">>}, {<<"userid">>, UserId}]} = decode(Result),
-	{SessionId, SId, AId, UserId}.
+	{UserNo, SessionId, SId, AId, UserId}.
 
-acceptable_tasks(Context) -> ok.
+%acceptable_tasks(_Context) -> ok.
 
 %% by far, only return a single tid.
 my_tasks(Context) ->
-	{SessionId, SId, AId, UserId} = Context,
-	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
+	{_UserNo, _SessionId, SId, AId, UserId} = Context,
+	{ok, {{"HTTP/1.1", 200, "OK"}, _, Result}} =
 		get_url("task/mytask?client=flash&accountid=" ++ AId ++
 			"&userid=" ++ integer_to_list(UserId) ++
 			"&format=json&sessionid=" ++ SId ++
 			"&tag=" ++ integer_to_list(get_time_stamp())),
 	{struct, [{<<"my_task">>, [{struct, Props}]}]} = decode(Result),
 	{_, Tid} = lists:keyfind(<<"tid">>, 1, Props),
-	Tid.
+	{_, Conditions} = lists:keyfind(<<"current">>, 1, Props),
+	Status = lists:map(
+		fun({struct, Condition}) ->
+			{_, Item} = lists:keyfind(<<"condition_item">>, 1, Condition),
+			{_, Count} = lists:keyfind(<<"condition_count">>, 1, Condition),
+			{Item, Count}
+		end, Conditions),
+	io:format("~p: conditions: ~p~n", [_UserNo, Conditions]),
+	{Tid, Status}.
 
 get_game_server(Context) ->
-	{SessionId, SId, AId, UserId} = Context,
+	{_UserNo, _SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		get_url("profile/locate?accountid=" ++ AId ++
 			"&tag=" ++ integer_to_list(get_time_stamp()) ++
@@ -61,7 +66,7 @@ get_game_server(Context) ->
 	{Host, Port}.
 
 finish_task(Context, Tid) ->
-	{SessionId, SId, AId, UserId} = Context,
+	{_UserNo, _SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		post_url("task/finish",
 			"accountid=" ++ AId ++
@@ -73,10 +78,23 @@ finish_task(Context, Tid) ->
 	%% only extract one of the next tasks
 	{_, [{struct, AcceptableTaskB} | _]} = lists:keyfind(<<"accpetable_task">>, 1, Props),
 	{_, NextTid} = lists:keyfind(<<"tid">>, 1, AcceptableTaskB),
-	NextTid.
+	{_, Conditions} = lists:keyfind(<<"condition">>, 1, AcceptableTaskB),
+	Status = lists:map(
+		fun({struct, Condition}) ->
+			{_, Item} = lists:keyfind(<<"condition_item">>, 1, Condition),
+			{_, Count} = lists:keyfind(<<"condition_count">>, 1, Condition),
+			{Item, Count}
+		end, Conditions),
+	io:format("~p: conditions: ~p~n", [_UserNo, Conditions]),
+	{NextTid, Status}.
+
+task_is_over(Status) ->
+	lists:all(
+		fun({_Item, Count}) -> Count == 0 end, Status).
+	
 
 accept_task(Context, Tid) ->
-	{SessionId, SId, AId, UserId} = Context,
+	{_UserNo, _SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		post_url("task/accept",
 			"accountid=" ++ AId ++
@@ -84,11 +102,11 @@ accept_task(Context, Tid) ->
 			"&tid=" ++ integer_to_list(Tid) ++
 			"&client=flash&reduce%5Fcooldown=0&format=json&userid=" ++ integer_to_list(UserId) ++
 			"&sessionid=" ++ SId),
-	{struct, [{<<"res">>,<<"ok">>}|_]} = decode(Result),
+	{struct, [{<<"res">>, <<"ok">>}|_]} = decode(Result),
 	ok.
 
 get_map_table(Context, Tid) ->
-	{SessionId, SId, AId, UserId} = Context,
+	{_UserNo, _SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		get_url("scene/get_map_table_list?accountid=" ++ AId ++
 			"&userid=" ++ integer_to_list(UserId) ++
@@ -99,7 +117,7 @@ get_map_table(Context, Tid) ->
 	 binary_to_list(GsIdB).
 
 jump_to_task(Context, Tid, GsId) ->
-	{SessionId, SId, AId, UserId} = Context,
+	{_UserNo, _SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		post_url("scene/jump_to_task_location",
 			"accountid=" ++ AId ++
@@ -108,7 +126,7 @@ jump_to_task(Context, Tid, GsId) ->
 			"&gsid=" ++ edoc_lib:escape_uri(GsId) ++
 			"&tid=" ++ integer_to_list(Tid) ++
 			"&format=json&sessionid=" ++ SId),
-	{struct, [{<<"res">>,<<"ok">>}|_]} = decode(Result),
+	{struct, [{<<"res">>, <<"ok">>}|_]} = decode(Result),
 	ok.
 
 %% todo: wrap the followings
@@ -117,10 +135,10 @@ visit_register() ->
 	VersionStrDot = version_tostr("."),
 
 	%% login so as to get cookies
-	{ok, {{"HTTP/1.1", 302, _ReasonPhrase}, Headers, _}} =
+	{ok, {{"HTTP/1.1", 302, _ReasonPhrase}, _Headers, _}} =
 		post_url("account/temp_login",
 			"form_email=hi2%40hi.com&form_password=hihihi&user_login=%E7%99%BB%E5%BD%95"),
-	{SessionId, SId, AId} = extract_cookies(),
+	{_SessionId, SId, AId} = extract_cookies(),
 	%io:format("cookies = ~p~n", [{SessionId, SId, AId}]),
 	get_url(""),
 	get_url("static/game/res_" ++ VersionStr ++ "/res/ui/game_config.xml"),
@@ -132,7 +150,7 @@ visit_register() ->
 	get_url("static/game/res_" ++ VersionStr ++ "/res/equipment/fashi.xml"),
 	get_url("static/game/res_" ++ VersionStr ++ "/res/equipment/mushi.xml"),
 	get_url("static/game/res_" ++ VersionStr ++ "/res/equipment/common.xml"),
-	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
+	{ok, {{"HTTP/1.1", 200, "OK"}, _, Result}} =
 		post_url("profile/register",
 			"accountid=" ++ AId ++ "&account%5Fid=" ++ AId ++ "&gender=male&tag=" ++
 			integer_to_list(get_time_stamp()) ++
@@ -196,10 +214,10 @@ visit_login() ->
 	VersionStr = version_tostr("_"),
 	VersionStrDot = version_tostr("."),
 
-	{ok, {{"HTTP/1.1", 302, _ReasonPhrase}, Headers, _}} =
+	{ok, {{"HTTP/1.1", 302, _ReasonPhrase}, _Headers, _}} =
 		post_url("account/temp_login",
 			"form_email=hi2%40hi.com&form_password=hihihi&user_login=%E7%99%BB%E5%BD%95"),
-	{SessionId, SId, AId} = extract_cookies(),
+	{_SessionId, SId, AId} = extract_cookies(),
 	get_url("account/game?accountid=" ++ AId ++
 		"&sessionid=" ++ SId ++
 		"&full_screen=3"),

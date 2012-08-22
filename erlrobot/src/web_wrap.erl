@@ -1,6 +1,6 @@
 -module(web_wrap).
 -compile(export_all).
--include("../include/hades.hrl").
+-include("hades.hrl").
 
 version_tostr(Split) ->
 	{0, Main, Minor, Revision} = ?VERSION,
@@ -17,7 +17,8 @@ get_url(Url) ->
 			[]
 		},
 		[],
-		[]).
+		[],
+		self()).
 
 post_url(Url, Content) ->
 	io:format("post_url ~p~n", [Url]),
@@ -28,10 +29,10 @@ post_url(Url, Content) ->
 			[],
 			"application/x-www-form-urlencoded",
 			Content
-		}, [], []).
+		}, [], [], self()).
 
 extract_cookies() ->
-	Cookies = httpc:which_cookies(),
+	Cookies = httpc:which_cookies(self()),
 	{_, SessionCookies} = lists:keyfind(session_cookies, 1, Cookies),
 	SessionId = get_cookie("session_id", SessionCookies),
 	SId = get_cookie("sid", SessionCookies),

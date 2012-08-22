@@ -1,7 +1,13 @@
 -module(cli).
--compile(export_all).
--include("../include/records.hrl").
--include("../include/playerInfo.hrl").
+-export(
+	[
+		start/0,
+		player/0,
+		player_msg/4,
+		player/4
+	]).
+-include("records.hrl").
+-include("playerInfo.hrl").
 -import(msg, [write_msg/1, read_msg/2]).
 -import(flags, [extract_str/2, extract_int/2]).
 -import(lib_misc, [timer/2]).
@@ -14,48 +20,69 @@ player() ->
 	Host = flags:extract_str(host, "localhost"),
 	Port = flags:extract_int(port, 9527),
 	UserId = flags:extract_int(uid, 29921),
-	Self = self(),
-    player(Host, Port, UserId,
-		fun(_Msg) ->
-			spawn(
-				fun() ->
-					timer(250,
+	PlayerPid = self(),
+	player({Host, Port}, "HELLO", UserId,
+		fun(Msg) ->
+			case Msg of
+				#msg_CreatureAppearNotif{
+					id = _PlayerId,
+					x = _X,
+					y = _Y,
+					angle = _Angle} ->
+					spawn(
 						fun() ->
-							%io:format("send internal move~n"),
-							Self ! {move, random}
+							link(PlayerPid),
+							timer(250,
+								fun() ->
+									%io:format("send internal move~n"),
+									PlayerPid ! {move, random},
+									true
+								end
+							)
 						end
-					)
-				end
-			)
+					);
+				_ ->
+					void
+			end
 		end).
 
-player(Host, Port, UserId, OnKnowSelfPos) ->
-    {ok, Socket} = gen_tcp:connect(Host, Port,
+player_msg(ParentPid, GameServer, SessionId, UserId) ->
+	GSPid = self(),
+	player(GameServer, SessionId, UserId,
+		fun(Msg) ->
+			ParentPid ! {GSPid, Msg}
+		end).
+
+player({Host, Port}, SessionId, UserId, OnMsg) ->
+	{ok, Socket} = gen_tcp:connect(Host, Port,
 		[binary, {packet, 0}, {nodelay, true}, {active, false}]),
-    ok = gen_tcp:send(Socket,
+	ok = gen_tcp:send(Socket,
 		binary_to_list(msg:write_msg(#msg_Login{
-			sessionKey = "HELLO",
+			sessionKey = SessionId,
 			userId = UserId,
 			tableId = -1,
 			major = 0,
 			minor = 8,
-			revision = 0 }))),
+			revision = 1}))),
 	{ok, <<?MSG_LoginAck:32, MsgLen:32>>} = gen_tcp:recv(Socket, 8),
 	{ok, Buff} = gen_tcp:recv(Socket, MsgLen),
 	#msg_LoginAck{errCode = 0, id = PlayerId} = msg:read_msg(Buff, ?MSG_LoginAck),
-	Self = self(),
+	PlayerPid = self(),
 	spawn(
 		fun() ->
-			timer(3000,
+			link(PlayerPid),
+			timer(30000,
 				fun() ->
-					%io:format("send internal ping~n"),
-					Self ! ping
+					io:format("send internal ping~n"),
+					PlayerPid ! ping,
+					true
 				end)
 			end
 		),
 	spawn(
 		fun() ->
-			socket_loop(Self, Socket)
+			link(PlayerPid),
+			socket_loop(PlayerPid, Socket)
 		end),
 	%io:format("start loop~n"),
 	loop(
@@ -64,7 +91,7 @@ player(Host, Port, UserId, OnKnowSelfPos) ->
 			userId = UserId,
 			playerId = PlayerId },
 		0,
-		OnKnowSelfPos).
+		OnMsg).
 
 socket_loop(P, Socket) ->
 	%io:format("enter socket_loop~n"),
@@ -77,18 +104,27 @@ socket_loop(P, Socket) ->
 	P ! Msg,
 	socket_loop(P, Socket).
 
-loop(Socket, PlayerInfo, FrameNo, OnKnowSelfPos) ->
+% todo: how to leave the server? just send LockPlayer {Lock = 1uy;} ?
+loop(Socket, #playerInfo{userId = UserId, playerId = PlayerId} = PlayerInfo, FrameNo, OnMsg) ->
 	%io:format("in main loop~n"),
+	OnMsg({logged, PlayerId}),
 	#playerInfo{
 		userId = UserId,
 		playerId = PlayerId,
 		pose = Pose } = PlayerInfo,
 	receive
+		quit ->
+			ok = gen_tcp:send(Socket,
+				binary_to_list(msg:write_msg(#msg_LockPlayer{
+					lock = 1}))),	% quit the loop
+			OnMsg(quitAck);
+			%loop(Socket, PlayerInfo, FrameNo, OnMsg);
+
 		ping ->
 			%io:format("in ping~n"),
 			ok = gen_tcp:send(Socket,
 				binary_to_list(msg:write_msg(#msg_Ping{data = FrameNo}))),
-			loop(Socket, PlayerInfo, FrameNo + 1, OnKnowSelfPos);
+			loop(Socket, PlayerInfo, FrameNo + 1, OnMsg);
 		{move, random} ->
 			%io:format("in move~n"),
 			#pose{
@@ -102,53 +138,63 @@ loop(Socket, PlayerInfo, FrameNo, OnKnowSelfPos) ->
 			X1 = X + Dist * math:cos(Angle1),
 			Y1 = Y + Dist * math:sin(Angle1),
 			self() ! {move, #pose{x = X1, y = Y1, angle = Angle1}},
-			loop(Socket, PlayerInfo, FrameNo, OnKnowSelfPos);
+			loop(Socket, PlayerInfo, FrameNo, OnMsg);
 		{move, #pose{
 				x = X,
 				y = Y,
 				angle = Angle}} ->
-			%io:format("in move pose~n"),
+			%io:format("in move pose (x=~p, y=~p)~n", [X, Y]),
 			ok = gen_tcp:send(Socket,
 				binary_to_list(msg:write_msg(#msg_Move{
 					state = 0,
 					x = X,
 					y = Y,
 					angle = Angle}))),
-			loop(Socket, PlayerInfo, FrameNo, OnKnowSelfPos);
+			loop(Socket, PlayerInfo, FrameNo, OnMsg);
+		{msg, Msg} ->
+			ok = gen_tcp:send(Socket,
+				binary_to_list(msg:write_msg(Msg))),
+			loop(Socket, PlayerInfo, FrameNo, OnMsg);
 		#msg_MoveNotif{
 			id = PlayerId,
 			x = X,
 			y = Y,
-			angle = Angle} ->
+			angle = Angle} = Msg ->
 			%io:format("move notif(x=~p, y=~p, angle=~p)~n", [X, Y, Angle]),
 			PlayerInfo1 = PlayerInfo#playerInfo{
 				pose = #pose{
 					x = X,
 					y = Y,
 					angle = Angle}},
-			loop(Socket, PlayerInfo1, FrameNo, OnKnowSelfPos);
+			OnMsg(Msg),
+			loop(Socket, PlayerInfo1, FrameNo, OnMsg);
 		#msg_PingAck{data = _Data} ->
 			%io:format("ping ack(~p)~n", [_Data]),
-			loop(Socket, PlayerInfo, FrameNo, OnKnowSelfPos);
+			loop(Socket, PlayerInfo, FrameNo, OnMsg);
 		#msg_CreatureAppearNotif{
 			id = PlayerId,
 			x = X,
 			y = Y,
-			angle = Angle} = Msg ->
+			angle = Angle} ->
 			%io:format("creature appear~n"),
 			PlayerInfo1 = PlayerInfo#playerInfo{
 				pose = #pose{
 					x = X,
 					y = Y,
 					angle = Angle}},
-			OnKnowSelfPos(Msg),
-			loop(Socket, PlayerInfo1, FrameNo, OnKnowSelfPos);
+			OnMsg({playerPose, #pose{x = X, y = Y, angle = Angle}}),
+			loop(Socket, PlayerInfo1, FrameNo, OnMsg);
+		#msg_CreatureDisappearNotif{
+			id = PlayerId} ->
+			OnMsg(quitAck);	% self disappear, so quit the loop
+
 		{task, TaskId, TaskState} ->
 			ok = gen_tcp:send(Socket,
 				binary_to_list(msg:write_msg(#msg_Task{
 					taskId = TaskId, taskState = TaskState}))),
-			loop(Socket, PlayerInfo, FrameNo, OnKnowSelfPos);
-		_ ->
+			loop(Socket, PlayerInfo, FrameNo, OnMsg);
+		Msg ->
 			%io:format("unknown msg~n"),
-			loop(Socket, PlayerInfo, FrameNo, OnKnowSelfPos)
+			OnMsg(Msg),
+			loop(Socket, PlayerInfo, FrameNo, OnMsg)
 	end.

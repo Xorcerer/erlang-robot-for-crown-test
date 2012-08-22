@@ -14,7 +14,8 @@
 %% 
 
 start() ->
-	FName = flags:extract_str(file, "abd11_finish_task2.dat"),
+	%FName = flags:extract_str(file, "abd11_finish_task2.dat"),
+	FName = flags:extract_str(file, "abc_task3.dat"),
 	io:format("file name = ~p~n", [FName]),
 	{ok, Buff} = file:read_file(FName),
 
@@ -24,14 +25,23 @@ start() ->
 	Packs = analyze_pack(Content),
 	io:format("count of packs is ~p~n", [length(Packs)]),
 	%% fortunately, all the ip packages have 'don't fragment' flags in them.
+	IPPacks = lists:filter(
+		fun({_I, _TS, Pack}) ->
+			{<<_Dest:48, _Src:48, _PROTO:16>>, _T} = split_binary(Pack, 14),
+			_PROTO == ?IP_PROTO
+		end, Packs),
 	TCPPacks = lists:map(
 		fun({I, TS, Pack}) ->
 			{<<_Dest:48, _Src:48, ?IP_PROTO:16>>, T} = split_binary(Pack, 14),
 			{I, TS, tcp_pack(T)}
-		end, Packs),
+		end, IPPacks),
+	%io:format("TCPPacks ok~n"),
 	%[TCPPack1, TCPPack2 | _] = TCPPacks,
-	%{{S1, MS1}, {{SrcIP1, SrcPort1, DestIP1, DestPort1}, _}} = TCPPack1,
-	%{{S2, MS2}, {{SrcIP2, SrcPort2, DestIP2, DestPort2}, _}} = TCPPack2,
+	%io:format("TCPPack1, TCPPack2~n"),
+	%io:format("TCPPack1: ~p~n", [TCPPack1]),
+	%{I1, {S1, MS1}, {{SrcIP1, SrcPort1, DestIP1, DestPort1}, _}} = TCPPack1,
+	%io:format("{S1, MS1}~n"),
+	%{I2, {S2, MS2}, {{SrcIP2, SrcPort2, DestIP2, DestPort2}, _}} = TCPPack2,
 	%io:format("~p.~p~n", [S1, MS1]), %ok
 	%io:format("~p.~p~n", [S2, MS2]), %ok
 	%io:format("src: ~p, ~p, dst: ~p, ~p~n",
@@ -39,7 +49,7 @@ start() ->
 	%io:format("src: ~p, ~p, dst: ~p, ~p~n",
 	%	[show_ip(SrcIP2), SrcPort2, show_ip(DestIP2), DestPort2]), %ok
 	TcpPacks1 = lists:sort(
-		fun({I1, TS1, {Sock1, _}}, {I2, TS2, {Sock2, _}}) ->
+		fun({_I1, TS1, {Sock1, _}}, {_I2, TS2, {Sock2, _}}) ->
 			comp_sock(Sock1, Sock2, TS1, TS2)
 		end, TCPPacks),
 	%lists:foreach(
@@ -48,16 +58,16 @@ start() ->
 	%			[show_ts(TS), show_ip(SrcIP), SrcPort, show_ip(DestIP), DestPort])
 	%	end, TcpPacks1),
 	TcpPacks2 = assemble_tcp(TcpPacks1),
-	%io:format("len: ~p~n", [length(TcpPacks2)]),
+	io:format("len: ~p~n", [length(TcpPacks2)]),
 	%lists:foreach(
 	%	fun({_Sock, L}) ->
 	%		io:format("  len: ~p~n", [length(L)])
 	%	end, TcpPacks2),
 	TcpPacks3 = lists:map(
 		fun({Sock, L}) ->
-			{SrcIP, SrcPort, DestIP, DestPort} = Sock,
+			{_SrcIP, _SrcPort, _DestIP, _DestPort} = Sock,
 			L1 = lists:map(
-				fun({I, TS, P}) ->
+				fun({_I, _TS, P}) ->
 					%if
 					%	SrcPort == 9648 ->
 					%		io:format("i: ~p, ts: ~p~n", [I, show_ts(TS)]),
@@ -88,7 +98,7 @@ read_head(Buff) ->
 
 analyze_pack(Buff) -> lists:reverse(analyze_pack(Buff, 1, [])).
 
-analyze_pack(<<>>, I, Acc) -> Acc;
+analyze_pack(<<>>, _I, Acc) -> Acc;
 analyze_pack(Buff, I, Acc) ->
 	{<<Secs:32/native, MSecs:32/native, CapLen:32/native, _:32>>, T} = split_binary(Buff, 16),
 	%io:format("pack len ~p~n", [CapLen]),
@@ -178,7 +188,7 @@ assemble_tcp([{I, TS, {Sock, P}} | T], Acc) ->
 
 show_user_pack({Sock, Buff}) ->
 	show_sock(Sock),
-	{SrcIP, SrcPort, DestIP, DestPort} = Sock,
+	{_SrcIP, SrcPort, _DestIP, DestPort} = Sock,
 	if
 		SrcPort == ?ODD_PORT orelse DestPort == ?ODD_PORT -> void;
 		true -> show_msgs(Buff)
@@ -196,5 +206,5 @@ show_msgs(Buff) ->
 		true -> void
 	end,
 	{T1, T2} = split_binary(T, MsgLen),
-	Msg = msg:read_msg(T1, MsgId),
+	_Msg = msg:read_msg(T1, MsgId),
 	show_msgs(T2).
