@@ -31,7 +31,7 @@ player() ->
 					angle = _Angle} ->
 					spawn(
 						fun() ->
-							link(PlayerPid),
+							monitor(process, PlayerPid),
 							timer(250,
 								fun() ->
 									%io:format("send internal move~n"),
@@ -70,7 +70,7 @@ player({Host, Port}, SessionId, UserId, OnMsg) ->
 	PlayerPid = self(),
 	spawn(
 		fun() ->
-			link(PlayerPid),
+			monitor(process, PlayerPid),
 			timer(30000,
 				fun() ->
 					io:format("send internal ping~n"),
@@ -81,7 +81,7 @@ player({Host, Port}, SessionId, UserId, OnMsg) ->
 		),
 	spawn(
 		fun() ->
-			link(PlayerPid),
+			monitor(process, PlayerPid),
 			socket_loop(PlayerPid, Socket)
 		end),
 	%io:format("start loop~n"),

@@ -28,7 +28,7 @@ start() ->
 			{cookies, enabled}
 		]),
 
-	N = 2,
+	N = 1,
 	Result = pmap(fun player/1, lists:seq(1, N)),
 	inets:stop(),
 	io:format("result = ~p~n", [Result]),
@@ -56,7 +56,7 @@ player(I) ->
 			{cookies, enabled}
 		], self()),
 
-	UserName = "afr" ++ integer_to_list(I),
+	UserName = "agf" ++ integer_to_list(I),
 	io:format("username: ~p~n", [UserName]),
 	Context = register_user(UserName, I),
 	{_, _SessionId, SId, _AId, UserId} = Context,
@@ -130,6 +130,12 @@ player(I) ->
 
 	inets:stop(httpc, self()),
 	io:format("~p: great! task2 finished!!~n", [I]),
+	
+	GSPid2 ! quit,
+	io:format("~p: wait quitAck2~n", [I]),
+	wait({GSPid2, quitAck}),
+	io:format("~p: after quitAck2~n", [I]),
+
 	ok.
 
 

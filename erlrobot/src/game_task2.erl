@@ -98,6 +98,16 @@ task2({patrol, wait, TriggerIds, VisitedTriggerIds}, GSPid, Context, TaskId, Use
 			io:format("~p: do_task2: discover a monster, monId=~p, x=~p, y=~p~n", [_UserNo, MonId, MonX, MonY]),
 			task2({attack, init, [{MonId, {MonX, MonY}}], MonId},
 				GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap)
+	after 2000 ->
+		%% timeout then resend move instruction
+		io:format("~p: do_task2 patrol failed moving, retry~n", [_UserNo]),
+		[VTrigId | _Vs] = VisitedTriggerIds,
+		{_, TrigLoc} = lists:keyfind(VTrigId, 1, Triggers),
+		Loc2 = offset(_UserNo, TrigLoc),
+		{Loc2X, Loc2Y} = Loc2,
+		GSPid ! {move, #pose{state = 0, x = Loc2X, y = Loc2Y, angle = 0.0}},
+		task2({patrol, wait, TriggerIds, VisitedTriggerIds},
+			GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap)
 	end;
 
 task2({attack, init, Monsters, TargetMonsterId}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, {Triggers, _Paths} = GameMap) ->
@@ -151,6 +161,8 @@ task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId, AttackLoc}, GSPid, 
 			if
 				IsTaskOver ->
 					%io:format("do_task2 task is over~n"),
+					%% notify attack monster process to quit regardless of if the killed monster is the target or not
+					AttackPid ! {self(), {killed, MonId}},
 					void;	% and then quit this loop itself
 				true ->
 					%% since I have only attacked the target monster, so this Id is supposed to be target monster
@@ -187,6 +199,7 @@ task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId, AttackLoc}, GSPid, 
 							TaskPid = self(),
 							AttackPid1 = spawn(
 								fun() ->
+									monitor(process, GSPid),
 									attack_monster(TaskPid, _UserNo, GSPid, TargetMonsterId)
 								end),
 							task2({attack, {wait, AttackPid1}, Monsters, TargetMonsterId, AttackLoc},
@@ -225,8 +238,7 @@ attack_monster(TaskPid, _UserNo, GSPid, MonsterId) ->
 		{TaskPid, {killed, _MonId}} ->
 			io:format("~p: attack_monster received monster(~p) killed! killing(~p)~n", [_UserNo, _MonId, MonsterId]),
 			void	% quit the loop
-	after
-		?SKILL_CD ->
+	after ?SKILL_CD ->
 			io:format("~p: attack_monster send casting to monster(~p)~n", [_UserNo, MonsterId]),
 			GSPid ! {msg, #msg_Casting{skillId = ?ATTACK_SKILL, skillSeq = 0, targetId = MonsterId, x = 0.0, y = 0.0}},
 			attack_monster(TaskPid, _UserNo, GSPid, MonsterId)
