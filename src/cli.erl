@@ -73,7 +73,7 @@ player({Host, Port}, SessionId, UserId, OnMsg) ->
 			monitor(process, PlayerPid),
 			timer(30000,
 				fun() ->
-					io:format("send internal ping~n"),
+					io:format("host: ~p, port: ~p, player pid: ~p, isalive?~p, send internal ping~n", [Host, Port, PlayerPid, is_process_alive(PlayerPid)]),
 					PlayerPid ! ping,
 					true
 				end)
@@ -117,11 +117,12 @@ loop(Socket, #playerInfo{userId = UserId, playerId = PlayerId} = PlayerInfo, Fra
 			ok = gen_tcp:send(Socket,
 				binary_to_list(msg:write_msg(#msg_LockPlayer{
 					lock = 1}))),	% quit the loop
+			io:format("game server ~p quit!~n", [self()]),
 			OnMsg(quitAck);
 			%loop(Socket, PlayerInfo, FrameNo, OnMsg);
 
 		ping ->
-			%io:format("in ping~n"),
+			io:format("in ping~n"),
 			ok = gen_tcp:send(Socket,
 				binary_to_list(msg:write_msg(#msg_Ping{data = FrameNo}))),
 			loop(Socket, PlayerInfo, FrameNo + 1, OnMsg);

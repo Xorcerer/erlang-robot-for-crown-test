@@ -237,9 +237,12 @@ attack_monster(TaskPid, _UserNo, GSPid, MonsterId) ->
 	receive
 		{TaskPid, {killed, _MonId}} ->
 			io:format("~p: attack_monster received monster(~p) killed! killing(~p)~n", [_UserNo, _MonId, MonsterId]),
-			void	% quit the loop
+			void;	% quit the loop
+		Msg ->
+			io:format("~p: attack_monster received msg: ~p~n", [_UserNo, Msg]),
+			void
 	after ?SKILL_CD ->
-			io:format("~p: attack_monster send casting to monster(~p)~n", [_UserNo, MonsterId]),
+			io:format("~p: gspid: ~p, alive?~p, attack_monster send casting to monster(~p)~n", [_UserNo, GSPid, is_process_alive(GSPid), MonsterId]),
 			GSPid ! {msg, #msg_Casting{skillId = ?ATTACK_SKILL, skillSeq = 0, targetId = MonsterId, x = 0.0, y = 0.0}},
 			attack_monster(TaskPid, _UserNo, GSPid, MonsterId)
 	end.

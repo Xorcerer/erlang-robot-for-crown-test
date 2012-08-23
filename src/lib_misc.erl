@@ -30,12 +30,15 @@ unconsult(File, L) ->
 
 timer(Time, Fun) ->
 	receive
-		after Time ->
-			R = Fun(),
-			if
-				R -> timer(Time, Fun);
-				true -> void
-			end
+		Msg ->
+			io:format("timer received msg: ~p~n", [Msg]),
+			void
+	after Time ->
+		R = Fun(),
+		if
+			R -> timer(Time, Fun);
+			true -> void
+		end
 	end.
 
 wait(Msg) ->
