@@ -1,8 +1,17 @@
 *.beam
 *.dump
 *.dat
+
+# IntelliJ Idea
+.idea/
+*.iml
+
+# Eclipse
 .metadata/
 erlide.log
 erlide.log.*
 .project
 .settings/
+
+# emacs
+TAGS
