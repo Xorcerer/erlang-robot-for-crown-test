@@ -16,9 +16,16 @@
 
 -import(game_task0, [task0/5]).
 -import(game_task1, [task1/5]).
--import(game_task2, [task2/7]).
+-import(game_task2, [task2/8]).
 
--import(lib_misc, [pmap/2, unconsult/2, wait/1]).
+-import(lib_misc,
+	[
+		pmap/2,
+		unconsult/2,
+		wait/1,
+		get_time_stamp/0,
+		get_username/0
+	]).
 -import(game_map, [read_map/1]).
 
 start() ->
@@ -28,7 +35,7 @@ start() ->
 			{cookies, enabled}
 		]),
 
-	N = 2,
+	N = flags:extract_int(count, 1),
 	Result = pmap(fun player/1, lists:seq(1, N)),
 	inets:stop(),
 	io:format("result = ~p~n", [Result]),
@@ -56,7 +63,8 @@ player(I) ->
 			{cookies, enabled}
 		], self()),
 
-	UserName = "agq" ++ integer_to_list(I),
+	%UserName = "agu" ++ integer_to_list(I),
+	UserName = "a_" ++ get_username() ++ "_" ++ integer_to_list(I),
 	io:format("username: ~p~n", [UserName]),
 	Context = register_user(UserName, I),
 	{_, _SessionId, SId, _AId, UserId} = Context,
@@ -122,7 +130,7 @@ player(I) ->
 	PlayerLoc2 = wait_player_loc(GSPid2),
 	io:format("~p: player2 loc = ~p~n", [I, PlayerLoc2]),
 
-	task2(GSPid2, Context, TaskId2, UserId, PlayerId2, PlayerLoc2, GameMap2),
+	task2(GSPid2, Context, TaskId2, UserId, PlayerId2, PlayerLoc2, GameMap2, _Status2),
 	io:format("~p: task2 finished~n", [I]),
 
 	{_TaskId3, _Status3} = finish_task(Context, TaskId2),
@@ -136,7 +144,7 @@ player(I) ->
 	wait({GSPid2, quitAck}),
 	io:format("~p: gspid2: ~p, after quitAck2~n", [I, GSPid2]),
 
-	ok.
+	{UserName, I}.
 
 
 %% GET /account/logout

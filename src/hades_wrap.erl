@@ -8,14 +8,14 @@
 		version_tostr/1,
 		get_url/1,
 		post_url/2,
-		extract_cookies/0,
-		get_time_stamp/0
+		extract_cookies/0
 	]).
+-import(lib_misc, [get_time_stamp/0]).
 
 register_user(UserName, UserNo) ->
 	post_url("account/signup",
 		"invite_code=daydayup&form_email=" ++ UserName ++
-		"%40hi.com&form_password=hihihi&form_name=" ++ UserName),
+		"%40hi.com&form_password=hihihi&form_name=xxx"),
 	{SessionId, SId, AId} = extract_cookies(),
 	{ok, {{"HTTP/1.1", 200, "OK"}, _, Result}} =
 		post_url("profile/register",

@@ -45,6 +45,3 @@ get_cookie(Name, Cookies) ->
 		_, _, _, _, _, _
 	} = lists:keyfind(Name, 4, Cookies),
 	Value.
-	
-get_time_stamp() ->
-	calendar:datetime_to_gregorian_seconds(erlang:localtime()).

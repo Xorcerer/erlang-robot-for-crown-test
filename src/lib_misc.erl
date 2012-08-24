@@ -46,3 +46,15 @@ wait(Msg) ->
 		Msg -> void;
 		_ -> wait(Msg)
 	end.
+
+	
+get_time_stamp() ->
+	calendar:datetime_to_gregorian_seconds(erlang:localtime()).
+
+get_username() ->
+	 %euuid:format(euuid:v5(euuid:ns_dns(), "example.com")).
+	%S = euuid:format(euuid:v1()),
+	%S1 = lists:filter(fun(C) -> C /= $- end, S),
+	%S2 = lists:map(fun(C) -> if C >= $0 andalso C =< $9 -> C - $0 + $g; true -> C end end, S1),
+	%S2.
+	integer_to_list(get_time_stamp()).
