@@ -99,9 +99,13 @@ socket_loop(P, Socket) ->
 	%io:format("in socket_loop, msgid=~p, len=~p~n", [MsgId, MsgLen]),
 	{ok, Buff} = gen_tcp:recv(Socket, MsgLen),
 	%io:format("in socket_loop, buff received~n"),
-	Msg = msg:read_msg(Buff, MsgId),
-	%io:format("in socket_loop, msg read:~p~n", [Msg]),
-	P ! Msg,
+	catch
+		begin
+			Msg = msg:read_msg(Buff, MsgId),
+			%io:format("in socket_loop, msg read:~p~n", [Msg]),
+			P ! Msg
+		end,
+
 	socket_loop(P, Socket).
 
 % todo: how to leave the server? just send LockPlayer {Lock = 1uy;} ?
