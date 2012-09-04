@@ -33,61 +33,94 @@
 		dist_squared_vec2d/2,
 		dist_vec2d/2
 	]).
+-import(test_graph, [find_path/3]).
 
-task2(GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, {Triggers, _Paths} = GameMap, Status) ->
+task2(GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc,
+		{Triggers, _BaseTrigId, _Paths} = GameMap, Status) ->
 	{_UserNo, _SessionId, _SId, _AId, UserId} = Context,
 	%{TrigId, _} = find_nearest_trigger(PlayerLoc, Triggers),
 	%{_, {TrigX, TrigY} = _TrigLoc} = lists:keyfind(TrigId, 1, Triggers),
 	N = random:uniform(length(Triggers)),
 	{TrigId, {TrigX, TrigY}} = lists:nth(N, Triggers),
 	GSPid ! {move, #pose{state = 0, x = TrigX, y = TrigY, angle = 0.0}},
-	task2({patrol, init, [TrigId], []}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap, Status).
+	task2({patrol, init, 0, [TrigId], []}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap, Status).
 
 %%
 %% Local Functions
 %%
-task2({patrol, init, TriggerIds, VisitedTriggerIds}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, {Triggers, Paths} = GameMap, Status) ->
+
+%% the first move is random and instant
+task2({patrol, init, FromTrigId, TriggerIds, VisitedTriggerIds},
+		GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc,
+		{Triggers, BaseTrigId, Paths} = GameMap, Status) ->
 	{_UserNo, _SessionId, _SId, _AId, UserId} = Context,
-	[TrigId | Ts] = TriggerIds,
-	IsVisited = lists:member(TrigId, VisitedTriggerIds),
+	[ToTrigId | Ts] = TriggerIds,
+	IsVisited = lists:member(ToTrigId, VisitedTriggerIds),
 	if
 		IsVisited ->
-			task2({patrol, init, Ts, VisitedTriggerIds}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap, Status);
+			task2({patrol, init, FromTrigId, Ts, VisitedTriggerIds}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap, Status);
 		true ->
-			{_, {_TrigX, _TrigY} = Trig} = lists:keyfind(TrigId, 1, Triggers),
-			%io:format("~p: do_task2 send move x=~p, y=~p~n", [_UserNo, _TrigX, _TrigY]),
-			{X, Y} = offset(_UserNo, Trig),
-			GSPid ! {move, #pose{state = 0, x = X, y = Y, angle = 0.0}},
-
-			%% pop H, push H's children
-			NeighborIds = get_trigger_neighbor_ids(TrigId, Paths),
-			TriggerIds1 = lists:append(NeighborIds, Ts),
-
-			%% wait for arriving the target trigger point
-			task2({patrol, wait, TriggerIds1, [TrigId | VisitedTriggerIds]},
-				GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap, Status)
+			if
+				FromTrigId == 0 ->
+					{_, {_TrigX, _TrigY} = Trig} = lists:keyfind(ToTrigId, 1, Triggers),
+					io:format("~p: do_task2 send move x=~p, y=~p~n", [_UserNo, _TrigX, _TrigY]),
+					{X, Y} = Trig,	% offset(_UserNo, Trig),
+					GSPid ! {move, #pose{state = 0, x = X, y = Y, angle = 0.0}},
+		
+					%% pop H, push H's children
+					NeighborIds = get_trigger_neighbor_ids(ToTrigId, BaseTrigId, Paths),
+					TriggerIds1 = lists:append(NeighborIds, Ts),
+		
+					%% wait for arriving the target trigger point
+					task2({patrol, wait, 0, undefined, TriggerIds1, [ToTrigId | VisitedTriggerIds]},
+						GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap, Status);
+				true ->
+					TaskPid = self(),
+					MovePid = spawn(
+						fun() ->
+							monitor(process, GSPid),
+							move_toward(TaskPid, _UserNo, GSPid, FromTrigId, ToTrigId, GameMap, ?MOVE_SPEED)
+						end),
+		
+					%% pop H, push H's children
+					NeighborIds = get_trigger_neighbor_ids(ToTrigId, BaseTrigId, Paths),
+					TriggerIds1 = lists:append(NeighborIds, Ts),
+		
+					task2({patrol, wait, FromTrigId, MovePid, TriggerIds1, [ToTrigId | VisitedTriggerIds]},
+						GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap, Status)
+			end
 	end;
 
-task2({patrol, wait, TriggerIds, VisitedTriggerIds}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, {Triggers, _Paths} = GameMap, Status) ->
+%% todo: non-first move should honor the move speed.
+task2({patrol, wait, FromTrigId, MovePid, TriggerIds, VisitedTriggerIds},
+		GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc,
+		{Triggers, _BaseTrigId, _Paths} = GameMap, Status) ->
+	io:format("in do_task2: patrol wait~n"),
 	{_UserNo, _SessionId, _SId, _AId, UserId} = Context,
 	receive
 		{GSPid, #msg_MoveNotif{
 			id = PlayerId, x = X, y = Y}} ->
-			[VTrigId | _Vs] = VisitedTriggerIds,
+			[ToTrigId | _Vs] = VisitedTriggerIds,
 			PlayerLoc1 = {X, Y},
-			{_, TrigLoc} = lists:keyfind(VTrigId, 1, Triggers),
+			{_, TrigLoc} = lists:keyfind(ToTrigId, 1, Triggers),
 			Loc2 = offset(_UserNo, TrigLoc),
 			Dist = dist_vec2d(PlayerLoc1, Loc2),
 			if
 				Dist < ?NEAR_DIST ->
-					timer:sleep(?MOVE_CD),
-					%io:format("~p: do_task2 arrived x=~p, y=~p~n", [_UserNo, X, Y]),
-					task2({patrol, init, TriggerIds, VisitedTriggerIds},
+					if
+						FromTrigId == 0 ->
+							%timer:sleep(?MOVE_CD),
+							io:format("~p: do_task2 arrived x=~p, y=~p~n", [_UserNo, X, Y]),
+							void;
+						true ->
+							MovePid ! {self(), arrived}
+					end,
+					task2({patrol, init, ToTrigId, TriggerIds, VisitedTriggerIds},
 						GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc1, GameMap, Status);
 				true ->
 					{Loc2X, Loc2Y} = Loc2,
 					GSPid ! {move, #pose{state = 0, x = Loc2X, y = Loc2Y, angle = 0.0}},
-					task2({patrol, wait, TriggerIds, VisitedTriggerIds},
+					task2({patrol, wait, FromTrigId, MovePid, TriggerIds, VisitedTriggerIds},
 						GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc1, GameMap, Status)
 			end;
 		{GSPid, #msg_CreatureAppearNotif{
@@ -99,26 +132,37 @@ task2({patrol, wait, TriggerIds, VisitedTriggerIds}, GSPid, Context, TaskId, Use
 			R = lists:member(Career, [1,2,3]),
 			if
 				R ->
-					task2({patrol, wait, TriggerIds, VisitedTriggerIds},
+					task2({patrol, wait, FromTrigId, MovePid, TriggerIds, VisitedTriggerIds},
 						GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap, Status);
 				true ->
 					%io:format("~p: do_task2: discover a monster, monId=~p, x=~p, y=~p~n", [_UserNo, MonId, MonX, MonY]),
+					MovePid ! {self(), abort},
 					task2({attack, init, [{MonId, {MonX, MonY}}], MonId},
 						GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap, Status)
 			end
 	after 2000 ->
 		%% timeout then resend move instruction
 		%io:format("~p: do_task2 patrol failed moving, retry~n", [_UserNo]),
-		[VTrigId | _Vs] = VisitedTriggerIds,
-		{_, TrigLoc} = lists:keyfind(VTrigId, 1, Triggers),
-		Loc2 = offset(_UserNo, TrigLoc),
-		{Loc2X, Loc2Y} = Loc2,
-		GSPid ! {move, #pose{state = 0, x = Loc2X, y = Loc2Y, angle = 0.0}},
-		task2({patrol, wait, TriggerIds, VisitedTriggerIds},
-			GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap, Status)
+		if
+			FromTrigId == 0 ->
+				[VTrigId | _Vs] = VisitedTriggerIds,
+				{_, TrigLoc} = lists:keyfind(VTrigId, 1, Triggers),
+				Loc2 = offset(_UserNo, TrigLoc),
+				{Loc2X, Loc2Y} = Loc2,
+				GSPid ! {move, #pose{state = 0, x = Loc2X, y = Loc2Y, angle = 0.0}},
+				task2({patrol, wait, 0, undefined, TriggerIds, VisitedTriggerIds},
+					GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap, Status);
+			true ->
+				task2({patrol, wait, FromTrigId, MovePid, TriggerIds, VisitedTriggerIds},
+						GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc,
+						GameMap, Status)
+		end
 	end;
 
-task2({attack, init, Monsters, TargetMonsterId}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, {Triggers, _Paths} = GameMap, Status) ->
+%% the first move toward monster is instant
+task2({attack, init, Monsters, TargetMonsterId},
+		GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc,
+		{Triggers, _BaseTrigId, _Paths} = GameMap, Status) ->
 	{_UserNo, _SessionId, _SId, _AId, UserId} = Context,
 	%io:format("do_task2: attack init monsters=~p, target=~p~n", [Monsters, TargetMonsterId]),
 	{_, MonLoc} = lists:keyfind(TargetMonsterId, 1, Monsters),
@@ -126,11 +170,14 @@ task2({attack, init, Monsters, TargetMonsterId}, GSPid, Context, TaskId, UserId,
 	AttackLoc = get_attack_loc(_UserNo, PlayerLoc, TrigId, GameMap),
 	{LocX, LocY} = AttackLoc,
 	%io:format("~p: do_task2 send attack move x=~p, y=~p~n", [_UserNo, LocX, LocY]),
-	GSPid ! {move, #pose{x = LocX, y = LocY, angle = 0.0}},
+	GSPid ! {move, #pose{state = 0, x = LocX, y = LocY, angle = 0.0}},
 	task2({attack, {wait, undefined}, Monsters, TargetMonsterId, AttackLoc},
 		GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap, Status);
 
-task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId, AttackLoc}, GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, {Triggers, _Paths} = GameMap, Status) ->
+%% non-first move toward monster should honor move speed.
+task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId, AttackLoc},
+		GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc,
+		{Triggers, _BaseTrigId, _Paths} = GameMap, Status) ->
 	{_UserNo, _SessionId, _SId, _AId, UserId} = Context,
 	receive
 		{GSPid, #msg_CreatureAppearNotif{
@@ -183,7 +230,7 @@ task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId, AttackLoc}, GSPid, 
 							%io:format("do_task2 no monsters at the moment~n"),
 							%% start to patrol from the nearest trigger point
 							{NearTrigId, _} = find_nearest_trigger(PlayerLoc, Triggers),
-							task2({patrol, init, [NearTrigId], []},
+							task2({patrol, init, 0, [NearTrigId], []},
 								GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap, Status1);
 						_ ->
 							if
@@ -223,7 +270,7 @@ task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId, AttackLoc}, GSPid, 
 						true ->
 							%io:format("~p: do_task2 in attack not near enough, or attck pid is ~p, dest=~p, player loc=~p~n", [_UserNo, AttackPid, AttackLoc, CLoc]),
 							{AttackLocX, AttackLocY} = AttackLoc,
-							GSPid ! {move, #pose{x = AttackLocX, y = AttackLocY, angle = 0.0}},
+							GSPid ! {move, #pose{state = 0, x = AttackLocX, y = AttackLocY, angle = 0.0}},
 							task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId, AttackLoc},
 								GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap, Status)
 					end;
@@ -244,9 +291,55 @@ task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId, AttackLoc}, GSPid, 
 		%% received this message denotes failure
 		%io:format("~p: do_task2 failed moving, retry~n", [_UserNo]),
 		{AttackLocX, AttackLocY} = AttackLoc,
-		GSPid ! {move, #pose{x = AttackLocX, y = AttackLocY, angle = 0.0}},
+		GSPid ! {move, #pose{state = 0, x = AttackLocX, y = AttackLocY, angle = 0.0}},
 		task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId, AttackLoc},
 			GSPid, Context, TaskId, UserId, PlayerId, PlayerLoc, GameMap, Status)
+	end.
+
+move_toward(TaskPid, _UserNo, GSPid, FromTrigId, ToTrigId, {Triggers, _BaseTrigId, _Paths} = GameMap, Speed) ->
+	{_, TrigLoc} = lists:keyfind(FromTrigId, 1, Triggers),
+	{X, Y} = TrigLoc,
+	GSPid ! {move, #pose{state = 0, x = X, y = Y, angle = 0.0}},
+	% find the path
+	Path = test_graph:find_path(GameMap, FromTrigId, ToTrigId),
+	move_toward(TaskPid, _UserNo, GSPid, FromTrigId, Path, ToTrigId, GameMap, Speed, 0).
+
+move_toward(TaskPid, _UserNo, GSPid, FromTrigId, Path, ToTrigId, {Triggers, _BaseTrigId, _Paths} = GameMap, Speed, N) ->
+	receive
+		{TaskPid, arrived} ->
+			void;
+		_Msg ->
+			void
+	after 100 ->
+		NextTarget =
+			case Path of
+				[] -> ToTrigId;
+				[H|_] -> H
+			end,
+		N1 = N + 1,
+		ToMove = Speed / 10.0 * N1,
+		{_, FromLoc} = lists:keyfind(FromTrigId, 1, Triggers),
+		{_, TargetLoc} = lists:keyfind(NextTarget, 1, Triggers),
+		Orient = sub_vec2d(TargetLoc, FromLoc),
+		Dist = len_vec2d(Orient),
+		if
+			ToMove >= Dist ->
+				{X, Y} = TargetLoc,
+				GSPid ! {move, #pose{state = 0, x = X, y = Y, angle = 0.0}},
+				case Path of
+					[] ->
+						move_toward(TaskPid, _UserNo, GSPid, FromTrigId, Path, ToTrigId, GameMap, Speed, N);
+					[H1|T1] ->
+						move_toward(TaskPid, _UserNo, GSPid, H1, T1, ToTrigId, GameMap, Speed, N1)
+				end;
+			true ->
+				Orient0 = norm_vec2d(Orient),
+				OffsetVec = scale_vec2d(Orient0, ToMove),
+				MoveVec = add_vec2d(FromLoc, OffsetVec),
+				{X, Y} = MoveVec,
+				GSPid ! {move, #pose{state = 0, x = X, y = Y, angle = 0.0}},
+				move_toward(TaskPid, _UserNo, GSPid, FromTrigId, Path, ToTrigId, GameMap, Speed, N1)
+		end
 	end.
 
 attack_monster(TaskPid, _UserNo, GSPid, MonsterId) ->
@@ -293,12 +386,12 @@ find_nearest_monster(Loc, Monsters) ->
 
 %% find the nearest one among the neighbor triggers
 %% that point must be available for destination of moving
-get_attack_loc(_UserNo, PlayerLoc, TrigId, {Triggers, Paths}) ->
+get_attack_loc(_UserNo, PlayerLoc, TrigId, {Triggers, BaseTrigId, Paths}) ->
 	{_, Trig1} = lists:keyfind(TrigId, 1, Triggers),
 
 	%% find the neighbor trigger which is nearest to the player (there must be at least one) and
 	%% move onto the line segment with min(100, segment len) away from the TrigId
-	NeighborIds = get_trigger_neighbor_ids(TrigId, Paths),
+	NeighborIds = get_trigger_neighbor_ids(TrigId, BaseTrigId, Paths),
 	{TrigId2, _} = find_nearest_trigger(PlayerLoc, NeighborIds, Triggers),
 	{_, Trig2} = lists:keyfind(TrigId2, 1, Triggers),
 	SegVec = sub_vec2d(Trig1, Trig2),
@@ -309,7 +402,7 @@ get_attack_loc(_UserNo, PlayerLoc, TrigId, {Triggers, Paths}) ->
 	Loc1 = offset(_UserNo, Loc),
 	Loc1.
 
-get_trigger_neighbor_ids(TriggerId, Paths) ->
+get_trigger_neighbor_ids(TriggerId, _BaseTrigId, Paths) ->
 	Neighbors = lists:filter(
 		fun({Source, Target}) ->
 			Source == TriggerId orelse Target == TriggerId

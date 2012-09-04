@@ -27,6 +27,7 @@ read_map(MapName) ->
 			{Y, _} = string:to_float(Y_S),
 			{Id, {X, Y}}
 		end, lists:seq(1, TriggerCount)),
+	{BaseTrigId, _} = string:to_integer(io:get_line(S, '')),
 	Paths = lists:map(
 		fun(_I) ->
 			[Target_S | Path_S] = string:tokens(io:get_line(S, ''), ": \n"),
@@ -35,36 +36,35 @@ read_map(MapName) ->
 			{Target, Path}
 		end, lists:seq(1, TriggerCount)),
 	file:close(S),
-	{Triggers, Paths}.
+	{Triggers, BaseTrigId, Paths}.
 
 test_path() ->
-	Map = read_map("yewai2x.grf"),
-	{_, Paths} = Map,
-	Path0 = find_path(Paths, 11, 31),
+	Map = read_map("yewai2.grf"),
+	io:format("read map ok~n"),
+	Path0 = find_path(Map, 11, 31),
 	io:format("path(11->31) is ~p~n", [Path0]),
 	Path0 = [14,16,17,21,23,25,29,30,48,47,45,44,43,42,41,40,38],
-	Path1 = find_path(Paths, 1, 4),
+	Path1 = find_path(Map, 1, 4),
 	Path1 = [],
-	Path1 = find_path(Paths, 4, 1),
-	Path2 = find_path(Paths, 1, 10),
+	Path1 = find_path(Map, 4, 1),
+	Path2 = find_path(Map, 1, 10),
 	Path2 = [4, 5, 6],
-	Path2 = find_path(Paths, 10, 1),
-	Path3 = find_path(Paths, 6, 10),
+	Path2 = lists:reverse(find_path(Map, 10, 1)),
+	Path3 = find_path(Map, 6, 10),
 	Path3 = [],
-	Path4 = find_path(Paths, 8, 11),
+	Path4 = find_path(Map, 8, 11),
 	Path4 = [9,26,27,25,23,21,17,16,14],
-	Path5 = find_path(Paths, 11, 8),
+	Path5 = find_path(Map, 11, 8),
 	Path5 = [14,16,17,21,23,25,27,26,9].
 
-find_path(Paths, From, To) ->
-	[{Trig0, _} |_] = Paths,
+find_path({_, BaseTrigId, Paths} = _Map, From, To) ->
 	{_, FromPath} = lists:keyfind(From, 1, Paths),
 	{_, ToPath} = lists:keyfind(To, 1, Paths),
 	if
-		Trig0 == From -> ToPath;
-		Trig0 == To -> FromPath;
+		BaseTrigId == From -> ToPath;
+		BaseTrigId == To -> FromPath;
 		true ->
-			extract_path(From, To, FromPath, ToPath, Trig0)
+			extract_path(From, To, FromPath, ToPath, BaseTrigId)
 	end.
 
 extract_path(From, To, [H|T1], [H|T2], _) -> extract_path(From, To, T1, T2, H);

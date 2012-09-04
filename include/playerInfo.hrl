@@ -19,6 +19,7 @@
 -define(ATTACK_SKILL, 4).	% toxiphily
 -define(SKILL_CD, 2000).
 -define(MOVE_CD, 2000).	% rest a period of time after a move request
+-define(MOVE_SPEED, 500.0).	% todo: trace the player's speed by appear notif
 
 -define(TASKSTATE_UNTAKE, 0).
 -define(TASKSTATE_CANTAKE, 1).
