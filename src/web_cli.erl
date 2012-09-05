@@ -26,7 +26,8 @@
 		get_time_stamp/0,
 		get_username/0
 	]).
--import(game_map, [read_map/1]).
+%-import(game_map, [read_map/1]).
+-import(test_graph, [read_map/1]).
 
 start() ->
 	ok = inets:start(),
