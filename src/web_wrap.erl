@@ -34,19 +34,12 @@ post_url(Url, Content) ->
 extract_cookies() ->
 	Cookies = httpc:which_cookies(self()),
 	{_, SessionCookies} = lists:keyfind(session_cookies, 1, Cookies),
-	SessionId =
-		try
-			get_cookie("session_id", SessionCookies)
-		catch
-			_:_ -> void
-		end,
+	SessionId = get_cookie("session_id", SessionCookies),
 	SId = get_cookie("sid", SessionCookies),
 	AId = get_cookie("aid", SessionCookies),
 	{SessionId, SId, AId}.
 
 get_cookie(Name, Cookies) ->
-	{
-		_, _, _, Name, Value,
-		_, _, _, _, _, _
-	} = lists:keyfind(Name, 4, Cookies),
+	{_, _, _, Name, Value, _, _, _, _, _, _} =
+		lists:keyfind(Name, 4, Cookies),
 	Value.

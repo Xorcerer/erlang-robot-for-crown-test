@@ -12,7 +12,7 @@
 %%
 %% Exported Functions
 %%
--export([task1/5]).
+-export([task1/4]).
 
 %%
 %% API Functions
@@ -21,23 +21,23 @@
 
 -define(Task1Loc, {2021.341, 773.998}).
 
-task1(GSPid, Context, TaskId, UserId, PlayerId) ->
-	{_UserNo, _SessionId, _SId, _AId, UserId} = Context,
+task1(GSPid, Context, TaskId, PlayerId) ->
+	{_SessionId, _SId, _AId, _UserId} = Context,
 	%io:format("task1, GSPid = ~p~n", [GSPid]),
-	task1(init, GSPid, Context, TaskId, UserId, PlayerId).
+	task1(init, GSPid, Context, TaskId, PlayerId).
 
 %%
 %% Local Functions
 %%
-task1(init, GSPid, Context, TaskId, UserId, PlayerId) ->
-	{_UserNo, _SessionId, _SId, _AId, UserId} = Context,
+task1(init, GSPid, Context, TaskId, PlayerId) ->
+	{_SessionId, _SId, _AId, _UserId} = Context,
 	{X, Y} = ?Task1Loc,
 	%io:format("do_task1 send move (x=~p, y=~p)~n", [X, Y]),
 	GSPid ! {move, #pose{x = X, y = Y, angle = 0.0}},
-	task1(wait, GSPid, Context, TaskId, UserId, PlayerId);
+	task1(wait, GSPid, Context, TaskId, PlayerId);
 
-task1(wait, GSPid, Context, TaskId, UserId, PlayerId) ->
-	{_UserNo, _SessionId, _SId, _AId, UserId} = Context,
+task1(wait, GSPid, Context, TaskId, PlayerId) ->
+	{_SessionId, _SId, _AId, _UserId} = Context,
 	receive
 		{GSPid, #msg_MoveNotif{
 			id = PlayerId, x = X, y = Y}} = _Msg ->
@@ -49,7 +49,7 @@ task1(wait, GSPid, Context, TaskId, UserId, PlayerId) ->
 					void;	% quit the loop
 				true ->
 					%io:format("do_task1, not near enough?~n"),
-					task1(wait, GSPid, Context, TaskId, UserId, PlayerId)
+					task1(wait, GSPid, Context, TaskId, PlayerId)
 			end
 	end.
 

@@ -12,32 +12,33 @@
 	]).
 -import(lib_misc, [get_time_stamp/0]).
 
-register_user(UserName, UserNo) ->
-	post_url("account/signup",
-		"invite_code=daydayup&form_email=" ++ UserName ++
-		"%40hi.com&form_password=hihihi&form_name=xxx"),
+-define(LogEmail, "hello%40gmail.com").
+-define(LogPassword, "hello").
+-define(LogUserName, "xxx").
+
+login_user(UserId) ->
+	{ok, {{"HTTP/1.1", _ResponseCode, _}, _, _ResponseContent}} =
+		post_url("account/temp_login",
+			"form_email=" ++ ?LogEmail ++
+			"&form_password=" ++ ?LogPassword ++
+			"&user_login=" ++ ?LogUserName),
+	io:format("~p:logged in~n", [UserId]),
 	{SessionId, SId, AId} = extract_cookies(),
-	{ok, {{"HTTP/1.1", 200, "OK"}, _, Result}} =
-		post_url("profile/register",
-			"accountid=" ++ AId ++
-			"&account%5Fid=" ++ AId ++
-			"&name=xxx&role=master&camp=0&idcard=1234345656dfdf&client=flash&tag=" ++
-			integer_to_list(get_time_stamp()) ++
-			"&format=json&userid=0&sessionid=" ++ SId ++
-			"&gender=female"),
-	{struct, [{<<"res">>, <<"ok">>}, {<<"userid">>, UserId}]} = decode(Result),
-	{UserNo, SessionId, SId, AId, UserId}.
+	{SessionId, SId, AId, UserId}.
 
 %acceptable_tasks(_Context) -> ok.
 
 %% by far, only return a single tid.
 my_tasks(Context) ->
-	{_UserNo, _SessionId, SId, AId, UserId} = Context,
+	{_SessionId, SId, AId, UserId} = Context,
+	io:format("~p:my_task~n", [UserId]),
+	Url = "task/mytask?client=flash&accountid=" ++ AId ++
+		"&userid=" ++ integer_to_list(UserId) ++
+		"&format=json&sessionid=" ++ SId ++
+		"&tag=" ++ integer_to_list(get_time_stamp()),
+	io:format("~p:url=~p~n", [UserId, Url]),
 	{ok, {{"HTTP/1.1", 200, "OK"}, _, Result}} =
-		get_url("task/mytask?client=flash&accountid=" ++ AId ++
-			"&userid=" ++ integer_to_list(UserId) ++
-			"&format=json&sessionid=" ++ SId ++
-			"&tag=" ++ integer_to_list(get_time_stamp())),
+		get_url(Url),
 	{struct, [{<<"my_task">>, [{struct, Props}]}]} = decode(Result),
 	{_, Tid} = lists:keyfind(<<"tid">>, 1, Props),
 	{_, Conditions} = lists:keyfind(<<"current">>, 1, Props),
@@ -47,11 +48,11 @@ my_tasks(Context) ->
 			{_, Count} = lists:keyfind(<<"condition_count">>, 1, Condition),
 			{Item, Count}
 		end, Conditions),
-	io:format("~p: conditions: ~p~n", [_UserNo, Conditions]),
+	io:format("~p: conditions: ~p~n", [UserId, Conditions]),
 	{Tid, Status}.
 
 get_game_server(Context) ->
-	{_UserNo, _SessionId, SId, AId, UserId} = Context,
+	{_SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		get_url("profile/locate?accountid=" ++ AId ++
 			"&tag=" ++ integer_to_list(get_time_stamp()) ++
@@ -66,7 +67,7 @@ get_game_server(Context) ->
 	{Host, Port}.
 
 finish_task(Context, Tid) ->
-	{_UserNo, _SessionId, SId, AId, UserId} = Context,
+	{_SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		post_url("task/finish",
 			"accountid=" ++ AId ++
@@ -85,7 +86,7 @@ finish_task(Context, Tid) ->
 			{_, Count} = lists:keyfind(<<"condition_count">>, 1, Condition),
 			{Item, Count}
 		end, Conditions),
-	io:format("~p: conditions: ~p~n", [_UserNo, Conditions]),
+	io:format("~p: conditions: ~p~n", [UserId, Conditions]),
 	{NextTid, Status}.
 
 task_is_over(Status) ->
@@ -94,7 +95,7 @@ task_is_over(Status) ->
 	
 
 accept_task(Context, Tid) ->
-	{_UserNo, _SessionId, SId, AId, UserId} = Context,
+	{_SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		post_url("task/accept",
 			"accountid=" ++ AId ++
@@ -106,7 +107,7 @@ accept_task(Context, Tid) ->
 	ok.
 
 get_map_table(Context, Tid) ->
-	{_UserNo, _SessionId, SId, AId, UserId} = Context,
+	{_SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		get_url("scene/get_map_table_list?accountid=" ++ AId ++
 			"&userid=" ++ integer_to_list(UserId) ++
@@ -117,7 +118,7 @@ get_map_table(Context, Tid) ->
 	 binary_to_list(GsIdB).
 
 jump_to_task(Context, Tid, GsId) ->
-	{_UserNo, _SessionId, SId, AId, UserId} = Context,
+	{_SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		post_url("scene/jump_to_task_location",
 			"accountid=" ++ AId ++
