@@ -37,9 +37,11 @@ start() ->
 			{cookies, enabled}
 		]),
 
-	N0 = flags:extract_int(count, 1),
-	N = min(N0, 5454),
-	Result = pmap(fun player/1, lists:seq(1, N)),
+	Base = flags:extract_int(base, 1),
+	N = flags:extract_int(count, 1),
+	UBound = Base + N,
+	%N = min(N0, 5454),
+	Result = pmap(fun player/1, lists:seq(Base, UBound)),
 	inets:stop(),
 
 	unconsult("players.dat", Result),
