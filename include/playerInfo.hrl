@@ -14,11 +14,15 @@
 
 -define(EPSILON, 1.0e-5).
 
+-define(LOGIN_DELAY, 200).
+
 -define(NEAR_DIST, 10.0).
 -define(ATTACK_DIST, 100.0).
 -define(ATTACK_SKILL, 4).	% toxiphily
 -define(SKILL_CD, 2000).
 -define(MOVE_CD, 2000).	% rest a period of time after a move request
+
+-define(USERID_BASE, 5460).
 
 -define(TASKSTATE_UNTAKE, 0).
 -define(TASKSTATE_CANTAKE, 1).

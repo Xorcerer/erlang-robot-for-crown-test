@@ -39,9 +39,10 @@ start() ->
 
 	Base = flags:extract_int(base, 1),
 	N = flags:extract_int(count, 1),
-	UBound = Base + N,
+	UBound = Base + N - 1,
 	%N = min(N0, 5454),
-	Result = pmap(fun player/1, lists:seq(Base, UBound)),
+	Result = pmap(fun player/1,
+		lists:seq(?USERID_BASE + Base, ?USERID_BASE + UBound)),
 	inets:stop(),
 
 	unconsult("players.dat", Result),

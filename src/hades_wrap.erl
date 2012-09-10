@@ -1,5 +1,6 @@
 -module(hades_wrap).
 -compile(export_all).
+-include("playerinfo.hrl").
 -include("hades.hrl").
 -import(mochijson2, [decode/1]).
 
@@ -12,14 +13,15 @@
 	]).
 -import(lib_misc, [get_time_stamp/0]).
 
--define(LogEmail, "hello%40gmail.com").
--define(LogPassword, "hello").
--define(LogUserName, "xxx").
+-define(LogPassword, "123456").
+-define(LogUserName, "testtest_dongyi").
 
 login_user(UserId) ->
+	UserSeq = UserId - ?USERID_BASE - 1,
+	LogEmail = io_lib:format("dongyi%40test~w.com", [UserSeq]),
 	{ok, {{"HTTP/1.1", _ResponseCode, _}, _, _ResponseContent}} =
 		post_url("account/temp_login",
-			"form_email=" ++ ?LogEmail ++
+			"form_email=" ++ LogEmail ++
 			"&form_password=" ++ ?LogPassword ++
 			"&user_login=" ++ ?LogUserName),
 	io:format("~p:logged in~n", [UserId]),

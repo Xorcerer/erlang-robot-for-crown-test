@@ -9,8 +9,6 @@
 -include("records.hrl").
 -include("playerInfo.hrl").
 -import(msg, [write_msg/1, read_msg/2]).
--import(flags, [extract_str/2, extract_int/2]).
--import(lib_misc, [timer/2]).
 
 start() ->
 	N = flags:extract_int(count, 100),
@@ -32,7 +30,7 @@ player() ->
 					spawn(
 						fun() ->
 							monitor(process, PlayerPid),
-							timer(250,
+							lib_misc:timer(250,
 								fun() ->
 									%io:format("send internal move~n"),
 									PlayerPid ! {move, random},
@@ -71,7 +69,7 @@ player({Host, Port}, SessionId, UserId, OnMsg) ->
 	spawn(
 		fun() ->
 			monitor(process, PlayerPid),
-			timer(30000,
+			lib_misc:timer(30000,
 				fun() ->
 					io:format("host: ~p, port: ~p, player pid: ~p, isalive?~p, send internal ping~n", [Host, Port, PlayerPid, is_process_alive(PlayerPid)]),
 					PlayerPid ! ping,
