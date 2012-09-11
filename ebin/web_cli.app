@@ -5,7 +5,7 @@
               {applications,[kernel,stdlib]},
               {mod,{web_cli_app,[]}},
               {env,[]},
-              {modules,[cli,flags,game_map,game_task0,game_task1,game_task2,
-                        hades_wrap,lib_misc,math_util,mochijson2,msg,
-                        msg_reader,msg_writer,pcap_analyze,web_cli,
+              {modules,[announcer,cli,flags,game_map,game_task0,game_task1,
+                        game_task2,hades_wrap,lib_misc,math_util,mochijson2,
+                        msg,msg_reader,msg_writer,pcap_analyze,web_cli,
                         web_cli_app,web_cli_sup,web_wrap]}]}.

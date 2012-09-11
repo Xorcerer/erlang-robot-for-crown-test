@@ -18,8 +18,9 @@
 
 login_user(UserId) ->
 	UserSeq = UserId - ?USERID_BASE - 1,
-	io:format("dongyi%40test~w.com~n", [UserSeq]),
-	LogEmail = io_lib:format("dongyi%40test~w.com", [UserSeq]),
+	io:format("~p: dongyi%40test~w.com~n", [UserId, UserSeq]),
+	% LogEmail = io_lib:format("dongyi@test~p.com", [UserSeq]),
+	LogEmail = "dongyi@test" ++ integer_to_list(UserSeq) ++ ".com",
 	{ok, {{"HTTP/1.1", _ResponseCode, _}, _, _ResponseContent}} =
 		post_url("account/temp_login",
 			"form_email=" ++ LogEmail ++
@@ -38,8 +39,8 @@ my_tasks(Context) ->
 	io:format("~p:my_task~n", [UserId]),
 	Url = "task/mytask?client=flash&accountid=" ++ AId ++
 		"&userid=" ++ integer_to_list(UserId) ++
-		"&format=json&sessionid=" ++ SId ++
-		"&tag=" ++ integer_to_list(get_time_stamp()),
+		"&format=json&tag=" ++ integer_to_list(get_time_stamp()) ++
+		"&sessionid=" ++ SId,
 	io:format("~p:url=~p~n", [UserId, Url]),
 	{ok, {{"HTTP/1.1", 200, "OK"}, _, Result}} = get_url(Url),
 	{struct, [{<<"my_task">>, [{struct, Props}]}]} = decode(Result),

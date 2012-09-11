@@ -259,7 +259,7 @@ attack_monster(TaskPid, UserId, GSPid, MonsterId) ->
 			%io:format("~p: attack_monster received msg: ~p~n", [UserId, _Msg]),
 			void
 	after ?SKILL_CD ->
-		io:format("~p: gspid: ~p, alive?~p, attack_monster send casting to monster(~p)~n", [UserId, GSPid, is_process_alive(GSPid), MonsterId]),
+		%% io:format("~p: gspid: ~p, alive?~p, attack_monster send casting to monster(~p)~n", [UserId, GSPid, is_process_alive(GSPid), MonsterId]),
 		GSPid ! {msg, #msg_Casting{skillId = ?ATTACK_SKILL, skillSeq = 0, targetId = MonsterId, x = 0.0, y = 0.0}},
 		attack_monster(TaskPid, UserId, GSPid, MonsterId)
 	end.
