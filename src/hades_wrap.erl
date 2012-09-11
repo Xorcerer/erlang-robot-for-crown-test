@@ -1,6 +1,6 @@
 -module(hades_wrap).
 -compile(export_all).
--include("playerinfo.hrl").
+-include("playerInfo.hrl").
 -include("hades.hrl").
 -import(mochijson2, [decode/1]).
 
