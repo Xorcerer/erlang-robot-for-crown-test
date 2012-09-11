@@ -20,7 +20,7 @@ get_url(Url) ->
 		},
 		[],
 		[],
-		web_wrap:get_httpc_profile(self())).
+		get_httpc_profile(self())).
 
 post_url(Url, Content) ->
 	io:format("post_url ~p~n", [Url]),
@@ -31,7 +31,7 @@ post_url(Url, Content) ->
 			[],
 			"application/x-www-form-urlencoded",
 			Content
-		}, [], [], web_wrap:get_httpc_profile(self())).
+		}, [], [], get_httpc_profile(self())).
 
 extract_cookies() ->
 	Cookies = httpc:which_cookies(get_httpc_profile(self())),
