@@ -36,6 +36,9 @@ start() ->
 		[
 			{cookies, enabled}
 		]),
+	
+	AnnouncerPid = spawn(fun() -> announcer:announce() end),
+	register(announcer, AnnouncerPid),
 
 	Base = flags:extract_int(base, 1),
 	N = flags:extract_int(count, 1),
@@ -70,6 +73,7 @@ player(UserId) ->
 		], self()),
 
 	Context = login_user(UserId),
+	announcer ! {self(), report, UserId, logged_in},
 	{_SessionId, SId, _AId, UserId} = Context,
 	io:format("~p:context ok~n", [UserId]),
 	{TaskId0, _} = my_tasks(Context),
@@ -98,6 +102,7 @@ player(UserId) ->
 	{TaskId1, _} = finish_task(Context, TaskId0),
 	io:format("~p: task1 is known:~p~n", [UserId, TaskId1]),
 	GSPid0 ! {msg, #msg_Task{taskId = TaskId0, taskState = ?TASKSTATE_COMPLETE}},
+	announcer ! {self(), report, UserId, fin_task0},
 
 	ok = accept_task(Context, TaskId1),
 	GSPid0 ! {msg, #msg_Task{taskId = TaskId1, taskState = ?TASKSTATE_TAKEN}},
@@ -107,6 +112,7 @@ player(UserId) ->
 	%% finish the second task, meanwhile get the conditions of the next task.
 	{TaskId2, _Status2} = finish_task(Context, TaskId1),
 	GSPid0 ! {msg, #msg_Task{taskId = TaskId1, taskState = ?TASKSTATE_COMPLETE}},
+	announcer ! {self(), report, UserId, fin_task1},
 
 	ok = accept_task(Context, TaskId2),
 	GsId2 = get_map_table(Context, TaskId2),
@@ -139,6 +145,7 @@ player(UserId) ->
 
 	{_TaskId3, _Status3} = finish_task(Context, TaskId2),
 	GSPid2 ! {msg, #msg_Task{taskId = TaskId2, taskState = ?TASKSTATE_COMPLETE}},
+	announcer ! {self(), report, UserId, fin_task2},
 
 	inets:stop(httpc, self()),
 	io:format("~p: great! task2 finished!!~n", [UserId]),
