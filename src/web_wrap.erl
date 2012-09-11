@@ -34,7 +34,7 @@ post_url(Url, Content) ->
 		}, [], [], web_wrap:get_httpc_profile(self())).
 
 extract_cookies() ->
-	Cookies = httpc:which_cookies(self()),
+	Cookies = httpc:which_cookies(get_httpc_profile(self())),
 	{_, SessionCookies} = lists:keyfind(session_cookies, 1, Cookies),
 	SessionId = get_cookie("session_id", SessionCookies),
 	SId = get_cookie("sid", SessionCookies),
