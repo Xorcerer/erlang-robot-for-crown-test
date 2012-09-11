@@ -27,6 +27,7 @@
 		get_username/0
 	]).
 -import(game_map, [read_map/1]).
+-spec(player/1 :: (Args :: integer()) -> integer()).
 
 -define(LogFileName, "logpost.txt").
 
@@ -37,6 +38,8 @@ start() ->
 			{cookies, enabled}
 		]),
 
+	CounterPid = spawn(fun count/0),
+	register(counter_pid, CounterPid),
 	Base = flags:extract_int(base, 1),
 	N = flags:extract_int(count, 1),
 	UBound = Base + N - 1,
@@ -60,14 +63,26 @@ wait_player_loc(GSPid) ->
 			{X, Y}
 	end.
 
+count() -> count(0).
+count(Num) ->
+	receive
+		{FromPid, get_current_number} ->
+			FromPid ! {current_number, Num},
+			count(Num + 1)
+	end.
+
 player(UserId) ->
-	{ok, HttpPid} = inets:start(httpc, [{profile, self()}]),
+	counter_pid ! {self(), get_current_number},
+	receive {current_number, SerialNum} -> SerialNum end,
+	ok = timer:sleep(SerialNum * 100),
+	ProfileId = "user_profile_" ++ integer_to_list(UserId),
+	{ok, HttpPid} = inets:start(httpc, [{profile, list_to_atom(ProfileId)}]),
 	io:format("inets:start, pid=~p~n", [HttpPid]),
 	
 	httpc:set_options(
 		[
 			{cookies, enabled}
-		], self()),
+		], ProfileId),
 
 	Context = login_user(UserId),
 	{_SessionId, SId, _AId, UserId} = Context,
@@ -120,6 +135,7 @@ player(UserId) ->
 	GameServer2 = get_game_server(Context),
 	{Host2, Port2} = GameServer2,
 	io:format("~p: got game server2 location: host = ~p, port = ~p~n", [UserId, Host2, Port2]),
+	timer:sleep(2000),
 	GameMap2 = read_map("yewai2.grf"),	% todo: fix the hardcoded map name here
 	io:format("~p: after read_map~n", [UserId]),
 
@@ -140,7 +156,7 @@ player(UserId) ->
 	{_TaskId3, _Status3} = finish_task(Context, TaskId2),
 	GSPid2 ! {msg, #msg_Task{taskId = TaskId2, taskState = ?TASKSTATE_COMPLETE}},
 
-	inets:stop(httpc, self()),
+	inets:stop(httpc, ProfileId),
 	io:format("~p: great! task2 finished!!~n", [UserId]),
 	
 	GSPid2 ! quit,

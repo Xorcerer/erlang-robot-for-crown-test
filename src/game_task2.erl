@@ -167,7 +167,7 @@ task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId, AttackLoc}, GSPid, 
 			%% perhaps count of enemy is decrimented!
 			%% query the task status to see if the task is over
 			{_, Status1} = my_tasks(Context),
-			IsTaskOver = task_is_over(Status1),
+			IsTaskOver = false, %% task_is_over(Status1),
 			if
 				IsTaskOver ->
 					%io:format("do_task2 task is over~n"),
