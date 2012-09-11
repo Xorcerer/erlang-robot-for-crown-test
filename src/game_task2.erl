@@ -166,7 +166,8 @@ task2({attack, {wait, AttackPid}, Monsters, TargetMonsterId, AttackLoc}, GSPid, 
 			end,
 			%% perhaps count of enemy is decrimented!
 			%% query the task status to see if the task is over
-			{_, Status1} = my_tasks(Context),
+			% {_, Status1} = my_tasks(Context),
+			Status1 = 0,
 			IsTaskOver = false, %% task_is_over(Status1),
 			if
 				IsTaskOver ->

@@ -94,7 +94,7 @@ player({Host, Port}, SessionId, UserId, OnMsg) ->
 socket_loop(P, Socket) ->
 	%io:format("enter socket_loop~n"),
 	{ok, <<MsgId:32, MsgLen:32>>} = gen_tcp:recv(Socket, 8),
-	io:format("in socket_loop, pid=~p, msgid=~p, len=~p~n", [self(), MsgId, MsgLen]),
+	%io:format("in socket_loop, pid=~p, msgid=~p, len=~p~n", [self(), MsgId, MsgLen]),
 	{ok, Buff} = gen_tcp:recv(Socket, MsgLen),
 	%io:format("in socket_loop, buff received~n"),
 	catch

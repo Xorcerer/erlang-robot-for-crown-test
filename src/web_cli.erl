@@ -46,7 +46,6 @@ start() ->
 	Base = flags:extract_int(base, 1),
 	N = flags:extract_int(count, 1),
 	UBound = Base + N - 1,
-	%N = min(N0, 5454),
 	Result = pmap(fun player/1,
 		lists:seq(?USERID_BASE + Base, ?USERID_BASE + UBound)),
 	inets:stop(),
@@ -88,7 +87,7 @@ player(UserId) ->
 		], HttpPid),
 
 	Context = login_user(UserId),
-	announcer ! {self(), report, UserId, logged_in},
+	%% announcer ! {self(), report, UserId, logged_in},
 	{_SessionId, SId, _AId, UserId} = Context,
 	io:format("~p:context ok~n", [UserId]),
 	{TaskId0, _} = my_tasks(Context),
@@ -117,8 +116,9 @@ player(UserId) ->
 	{TaskId1, _} = finish_task(Context, TaskId0),
 	io:format("~p: task1 is known:~p~n", [UserId, TaskId1]),
 	GSPid0 ! {msg, #msg_Task{taskId = TaskId0, taskState = ?TASKSTATE_COMPLETE}},
-	announcer ! {self(), report, UserId, fin_task0},
+	%% announcer ! {self(), report, UserId, fin_task0},
 
+	io:format("~p: pre accept task id:~p~n", [UserId, TaskId1]),
 	ok = accept_task(Context, TaskId1),
 	GSPid0 ! {msg, #msg_Task{taskId = TaskId1, taskState = ?TASKSTATE_TAKEN}},
 	task1(GSPid0, Context, TaskId1, PlayerId0),
@@ -127,7 +127,7 @@ player(UserId) ->
 	%% finish the second task, meanwhile get the conditions of the next task.
 	{TaskId2, _Status2} = finish_task(Context, TaskId1),
 	GSPid0 ! {msg, #msg_Task{taskId = TaskId1, taskState = ?TASKSTATE_COMPLETE}},
-	announcer ! {self(), report, UserId, fin_task1},
+	%% announcer ! {self(), report, UserId, fin_task1},
 
 	ok = accept_task(Context, TaskId2),
 	GsId2 = get_map_table(Context, TaskId2),

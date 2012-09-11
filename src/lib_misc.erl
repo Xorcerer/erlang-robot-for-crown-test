@@ -20,7 +20,7 @@ pmap(F, L) ->
 	gather(Pids, Ref).
 
 do_f(Parent, Ref, F, X) ->
-	Parent ! {self(), Ref, (catch F(X))}.
+	Parent ! {self(), Ref, F(X)}.
 
 gather([Pid|T], Ref) ->
 	receive
