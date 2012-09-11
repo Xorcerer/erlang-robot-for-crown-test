@@ -18,6 +18,7 @@
 
 login_user(UserId) ->
 	UserSeq = UserId - ?USERID_BASE - 1,
+	io:format("dongyi%40test~w.com~p", [UserSeq]),
 	LogEmail = io_lib:format("dongyi%40test~w.com", [UserSeq]),
 	{ok, {{"HTTP/1.1", _ResponseCode, _}, _, _ResponseContent}} =
 		post_url("account/temp_login",

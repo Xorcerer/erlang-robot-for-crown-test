@@ -75,14 +75,14 @@ player(UserId) ->
 	counter_pid ! {self(), get_current_number},
 	receive {current_number, SerialNum} -> SerialNum end,
 	ok = timer:sleep(SerialNum * 100),
-	ProfileId = "user_profile_" ++ integer_to_list(UserId),
-	{ok, HttpPid} = inets:start(httpc, [{profile, list_to_atom(ProfileId)}]),
+	ProfileId = web_wrap:get_httpc_profile(self()),
+	{ok, HttpPid} = inets:start(httpc, [{profile, ProfileId}]),
 	io:format("inets:start, pid=~p~n", [HttpPid]),
 	
 	httpc:set_options(
 		[
 			{cookies, enabled}
-		], ProfileId),
+		], HttpPid),
 
 	Context = login_user(UserId),
 	{_SessionId, SId, _AId, UserId} = Context,

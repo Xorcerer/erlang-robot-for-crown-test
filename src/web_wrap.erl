@@ -8,6 +8,8 @@ version_tostr(Split) ->
 	L1 = lists:map(fun integer_to_list/1, L),
 	string:join(L1, Split).
 
+get_httpc_profile(Pid) -> list_to_atom(pid_to_list(Pid)).
+
 get_url(Url) ->
 	io:format("get_url ~p~n", [Url]),
 	httpc:request(
@@ -18,7 +20,7 @@ get_url(Url) ->
 		},
 		[],
 		[],
-		self()).
+		web_wrap:get_httpc_profile(self())).
 
 post_url(Url, Content) ->
 	io:format("post_url ~p~n", [Url]),
@@ -29,7 +31,7 @@ post_url(Url, Content) ->
 			[],
 			"application/x-www-form-urlencoded",
 			Content
-		}, [], [], self()).
+		}, [], [], web_wrap:get_httpc_profile(self())).
 
 extract_cookies() ->
 	Cookies = httpc:which_cookies(self()),
