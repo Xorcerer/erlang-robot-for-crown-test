@@ -1,40 +1,48 @@
+REBAR?=./rebar
+
 .SUFFIXES: .erl .beam
 
-.erl.beam:
-	erlc -W $<
+.PHONY: all clean test test-fast docs build_plt analyze update \
+    erlang test_erlang test_erlang_fast clean_erlang docs_erlang \
 
-ERL = erl -boot start_clean
+REBAR?=./rebar
 
-MODS = client flags msg timer msg_reader msg_writer
+all: erlang
 
-all: compile
+clean: clean_erlang
 
-compile: ${MODS:%=%.beam} subdirs
+test: test_erlang
 
-subdirs:
-	make compile
-	make
+test-fast: test_erlang_fast
 
-client.beam: client.erl
-	${ERL} -W0 client.erl
+update: update_erlang
 
-flags.beam: flags.erl
-	${ERL} -W0 flags.erl
+docs: docs_erlang
 
-timer.beam: timer.erl
-	${ERL} -W0 timer.erl
+erlang:
+	@$(REBAR) get-deps
+	@$(REBAR) compile
 
-msg.beam: msg.erl
-	${ERL} -W0 msg.erl
+update_erlang:
+	@$(REBAR) update-deps
 
-msg_reader.beam: msg_reader.erl
-	${ERL} -W0 msg_reader.erl
+compile_erlang:
+	@$(REBAR) compile
 
-msg_writer.beam: msg_writer.erl
-	${ERL} -W0 msg_writer.erl
+test_erlang: erlang
+	@rm -rf .eunit # Do not like: #14639
+	@mkdir -p .eunit
+	@$(REBAR) skip_deps=true eunit
 
-client: compile
-	${ERL} -noshell -s client
+test_erlang_fast: compile_erlang
+	@$(REBAR) skip_deps=true eunit
 
-clean:
-	rm -rf *.beam erl_crash.dump
+
+clean_erlang:
+	@$(REBAR) delete-deps
+	@$(REBAR) clean
+	@rm -rf .eunit
+	@rm -rf doc
+
+docs_erlang:
+	@$(REBAR) skip_deps=true doc%  
