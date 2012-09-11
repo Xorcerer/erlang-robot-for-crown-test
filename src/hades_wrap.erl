@@ -18,7 +18,7 @@
 
 login_user(UserId) ->
 	UserSeq = UserId - ?USERID_BASE - 1,
-	io:format("dongyi%40test~w.com~p", [UserSeq]),
+	io:format("dongyi%40test~w.com~n", [UserSeq]),
 	LogEmail = io_lib:format("dongyi%40test~w.com", [UserSeq]),
 	{ok, {{"HTTP/1.1", _ResponseCode, _}, _, _ResponseContent}} =
 		post_url("account/temp_login",
@@ -27,6 +27,7 @@ login_user(UserId) ->
 			"&user_login=" ++ ?LogUserName),
 	io:format("~p:logged in~n", [UserId]),
 	{SessionId, SId, AId} = extract_cookies(),
+	io:format("get cookies:~p~n", [{SessionId, SId, AId}]),
 	{SessionId, SId, AId, UserId}.
 
 %acceptable_tasks(_Context) -> ok.

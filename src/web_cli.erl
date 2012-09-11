@@ -142,7 +142,7 @@ player(UserId) ->
 	{Host2, Port2} = GameServer2,
 	io:format("~p: got game server2 location: host = ~p, port = ~p~n", [UserId, Host2, Port2]),
 	timer:sleep(2000),
-	GameMap2 = read_map("yewai2.grf"),	% todo: fix the hardcoded map name here
+	GameMap2 = read_map("../data/yewai2.grf"),	% todo: fix the hardcoded map name here
 	io:format("~p: after read_map~n", [UserId]),
 
 	%% experiment: only tackle with the task related monsters' appearances
