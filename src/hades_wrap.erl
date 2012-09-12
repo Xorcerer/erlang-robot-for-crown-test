@@ -11,21 +11,20 @@
 		post_url/2,
 		extract_cookies/0
 	]).
--import(lib_misc, [get_time_stamp/0]).
+-import(lib_misc, [get_time_stamp/0, sformat/2]).
 
 -define(LogPassword, "123456").
 -define(LogUserName, "testtest_dongyi").
 
 login_user(UserId) ->
 	UserSeq = UserId - ?USERID_BASE - 1,
-	io:format("~p: dongyi%40test~w.com~n", [UserId, UserSeq]),
-	% LogEmail = io_lib:format("dongyi@test~p.com", [UserSeq]),
-	LogEmail = "dongyi@test" ++ integer_to_list(UserSeq) ++ ".com",
+	io:format("~p: dongyi%40test~p.com~n", [UserId, UserSeq]),
+	LogEmail = sformat("dongyi@test~p.com", [UserSeq]),
+	%LogEmail = "dongyi@test" ++ integer_to_list(UserSeq) ++ ".com",
 	{ok, {{"HTTP/1.1", _ResponseCode, _}, _, _ResponseContent}} =
 		post_url("account/temp_login",
-			"form_email=" ++ LogEmail ++
-			"&form_password=" ++ ?LogPassword ++
-			"&user_login=" ++ ?LogUserName),
+			sformat("form_email=~s&form_password=~s&user_login=~s",
+			[LogEmail, ?LogPassword, ?LogUserName])),
 	io:format("~p:logged in~n", [UserId]),
 	{SessionId, SId, AId} = extract_cookies(),
 	io:format("~p: get cookies:~p~n", [UserId, {SessionId, SId, AId}]),
@@ -37,10 +36,8 @@ login_user(UserId) ->
 my_tasks(Context) ->
 	{_SessionId, SId, AId, UserId} = Context,
 	io:format("~p:my_task~n", [UserId]),
-	Url = "task/mytask?client=flash&accountid=" ++ AId ++
-		"&userid=" ++ integer_to_list(UserId) ++
-		"&format=json&tag=" ++ integer_to_list(get_time_stamp()) ++
-		"&sessionid=" ++ SId,
+	Url = sformat("task/mytask?client=flash&accountid=~s&userid=~p&format=json&tag=~p&sessionid=~s",
+		[AId, UserId, get_time_stamp(), SId]),
 	io:format("~p:url=~p~n", [UserId, Url]),
 	{ok, {{"HTTP/1.1", 200, "OK"}, _, Result}} = get_url(Url),
 	{struct, [{<<"my_task">>, [{struct, Props}]}]} = decode(Result),
@@ -58,10 +55,8 @@ my_tasks(Context) ->
 get_game_server(Context) ->
 	{_SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
-		get_url("profile/locate?accountid=" ++ AId ++
-			"&tag=" ++ integer_to_list(get_time_stamp()) ++
-			"&client=flash&format=json&userid=" ++ integer_to_list(UserId) ++
-			"&sessionid=" ++ SId),
+		get_url(sformat("profile/locate?accountid=~s&tag=~p&client=flash&format=json&userid=~p&sessionid=~s",
+			[AId, get_time_stamp(), UserId, SId])),
 	{struct, Props} = decode(Result),
 	{_, HostB} = lists:keyfind(<<"host">>, 1, Props),
 	{_, PortB} = lists:keyfind(<<"port">>, 1, Props),
@@ -74,11 +69,8 @@ finish_task(Context, Tid) ->
 	{_SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		post_url("task/finish",
-			"accountid=" ++ AId ++
-			"&tag=" ++ integer_to_list(get_time_stamp()) ++
-			"&client=flash&tid=" ++ integer_to_list(Tid) ++
-			"&userid=" ++ integer_to_list(UserId) ++
-			"&format=json&sessionid=" ++ SId),
+			sformat("accountid=~s&tag=~p&client=flash&tid=~p&userid=~p&format=json&sessionid=~s",
+			[AId, get_time_stamp(), Tid, UserId, SId])),
 	{struct, [{<<"res">>,<<"ok">>}|Props]} = decode(Result),
 	%% only extract one of the next tasks
 	{_, [{struct, AcceptableTaskB} | _]} = lists:keyfind(<<"accpetable_task">>, 1, Props),
@@ -102,22 +94,16 @@ accept_task(Context, Tid) ->
 	{_SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		post_url("task/accept",
-			"accountid=" ++ AId ++
-			"&tag=" ++ integer_to_list(get_time_stamp()) ++
-			"&tid=" ++ integer_to_list(Tid) ++
-			"&client=flash&reduce%5Fcooldown=0&format=json&userid=" ++ integer_to_list(UserId) ++
-			"&sessionid=" ++ SId),
+			sformat("accountid=~s&tag=~p&tid=~p&client=flash&reduce%5Fcooldown=0&format=json&userid=~p&sessionid=~s",
+			[AId, get_time_stamp(), Tid, UserId, SId])),
 	{struct, [{<<"res">>, <<"ok">>}|_]} = decode(Result),
 	ok.
 
 get_map_table(Context, Tid) ->
 	{_SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
-		get_url("scene/get_map_table_list?accountid=" ++ AId ++
-			"&userid=" ++ integer_to_list(UserId) ++
-			"&taskid=" ++ integer_to_list(Tid) ++
-			"&client=flash&tag=" ++ integer_to_list(get_time_stamp()) ++
-			"&format=json&sessionid=" ++ SId),
+		get_url(sformat("scene/get_map_table_list?accountid=~s&userid=~p&taskid=~p&client=flash&tag=~p&format=json&sessionid=~s",
+			[AId, UserId, Tid, get_time_stamp(), SId])),
 	 {struct, [{GsIdB, _}|_]} = mochijson2:decode(Result),
 	 binary_to_list(GsIdB).
 
@@ -125,11 +111,7 @@ jump_to_task(Context, Tid, GsId) ->
 	{_SessionId, SId, AId, UserId} = Context,
 	{ok, {{"HTTP/1.1",200,"OK"}, _, Result}} =
 		post_url("scene/jump_to_task_location",
-			"accountid=" ++ AId ++
-			"&userid=" ++ integer_to_list(UserId) ++
-			"&table=%2D1&client=flash&tag=" ++ integer_to_list(get_time_stamp()) ++
-			"&gsid=" ++ edoc_lib:escape_uri(GsId) ++
-			"&tid=" ++ integer_to_list(Tid) ++
-			"&format=json&sessionid=" ++ SId),
+			sformat("accountid=~s&userid=~p&table=%2D1&client=flash&tag=~p&gsid=~s&tid=~p&format=json&sessionid=~s",
+			[AId, UserId, get_time_stamp(), edoc_lib:escape_uri(GsId), Tid, SId])),
 	{struct, [{<<"res">>, <<"ok">>}|_]} = decode(Result),
 	ok.

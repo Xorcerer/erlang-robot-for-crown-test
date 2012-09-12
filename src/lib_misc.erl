@@ -39,6 +39,9 @@ mapi(F, L) -> mapi(F, 0, L, []).
 mapi(_, _, [], Acc) -> lists:reverse(Acc);
 mapi(F, N, [H|T], Acc) -> mapi(F, N+1, T, [F(N, H) | Acc]).
 
+sformat(Format, Content) ->
+	lists:flatten(io_lib:format(Format, Content)).
+
 timer(Time, Fun) ->
 	receive
 		Msg ->
