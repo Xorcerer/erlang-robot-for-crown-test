@@ -143,7 +143,7 @@ player(UserId) ->
 	ParentPid = self(),
 	_Status2 = 0,
 	TaskId2 = 3,
-	GameServer2 = {"172.16.8.210", 10001},
+	GameServer2 = {"172.16.8.211", 10001},
 	
 	{Host2, Port2} = GameServer2,
 	io:format("~p: got game server2 location: host = ~p, port = ~p~n", [UserId, Host2, Port2]),
