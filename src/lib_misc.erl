@@ -72,3 +72,10 @@ get_username() ->
 	%S2 = lists:map(fun(C) -> if C >= $0 andalso C =< $9 -> C - $0 + $g; true -> C end end, S1),
 	%S2.
 	integer_to_list(get_time_stamp()).
+
+rpc(Pid, Msg) ->
+	Pid ! {self(), Msg},
+	receive
+		{Pid, Response} -> Response
+	end.
+

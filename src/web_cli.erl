@@ -69,13 +69,14 @@ count() -> count(0).
 count(Num) ->
 	receive
 		{FromPid, get_current_number} ->
-			FromPid ! {current_number, Num},
+			FromPid ! {self(), Num},
 			count(Num + 1)
 	end.
 
 player(UserId) ->
-	counter_pid ! {self(), get_current_number},
-	receive {current_number, SerialNum} -> SerialNum end,
+%% 	counter_pid ! {self(), get_current_number},
+%% 	receive {current_number, SerialNum} -> SerialNum end,
+	SerialNum = lib_misc:rpc(counter_pid, get_current_number),
 	ok = timer:sleep(SerialNum * 200),
 	ProfileId = web_wrap:get_httpc_profile(self()),
 	{ok, HttpPid} = inets:start(httpc, [{profile, ProfileId}]),
@@ -87,58 +88,63 @@ player(UserId) ->
 		], HttpPid),
 
 	Context = login_user(UserId),
-	% announcer_p ! {self(), report, UserId, logged_in},
+%% 	% announcer_p ! {self(), report, UserId, logged_in},
 	{_SessionId, SId, _AId, UserId} = Context,
-	io:format("~p:context ok~n", [UserId]),
-	{TaskId0, _} = my_tasks(Context),
-	io:format("task id = ~p~n", [TaskId0]),
-	GameServer0 = get_game_server(Context),
-	{Host0, Port0} = GameServer0,
-	io:format("~p: got game server0 location: host = ~p, port = ~p~n", [UserId, Host0, Port0]),
+%% 	io:format("~p:context ok~n", [UserId]),
+%% 	{TaskId0, _} = my_tasks(Context),
+%% 	io:format("task id = ~p~n", [TaskId0]),
+%% 	GameServer0 = get_game_server(Context),
+%% 	{Host0, Port0} = GameServer0,
+%% 	io:format("~p: got game server0 location: host = ~p, port = ~p~n", [UserId, Host0, Port0]),
+%% 	ParentPid = self(),
+%% 	io:format("~p: ParentPid = ~p~n", [UserId, ParentPid]),
+%% 	
+%% 	%% todo: kill this process and its inner player process when needed
+%% 	GSPid0 = spawn(
+%% 		fun() ->
+%% 			io:format("~p: spawning cli:player~n", [UserId]),
+%% 			cli:player_msg(ParentPid, GameServer0, SId, UserId)
+%% 		end),
+%% 	io:format("~p: GSPid0 = ~p~n", [UserId, GSPid0]),
+%% 	PlayerId0 = wait_player_id(GSPid0),
+%% 	io:format("~p: player0 id = ~p~n", [UserId, PlayerId0]),
+%% 	PlayerLoc0 = wait_player_loc(GSPid0),
+%% 	io:format("~p: player0 loc = ~p~n", [UserId, PlayerLoc0]),
+%% 	
+%% 	task0(GSPid0, Context, TaskId0, PlayerId0),
+%% 	io:format("~p: task0 finished~n", [UserId]),
+%% 
+%% 	{TaskId1, _} = finish_task(Context, TaskId0),
+%% 	io:format("~p: task1 is known:~p~n", [UserId, TaskId1]),
+%% 	GSPid0 ! {msg, #msg_Task{taskId = TaskId0, taskState = ?TASKSTATE_COMPLETE}},
+%% 	% announcer_p ! {self(), report, UserId, fin_task0},
+%% 
+%% 	io:format("~p: pre accept task id:~p~n", [UserId, TaskId1]),
+%% 	ok = accept_task(Context, TaskId1),
+%% 	GSPid0 ! {msg, #msg_Task{taskId = TaskId1, taskState = ?TASKSTATE_TAKEN}},
+%% 	task1(GSPid0, Context, TaskId1, PlayerId0),
+%% 	io:format("~p: task1 finished~n", [UserId]),
+%% 
+%% 	%% finish the second task, meanwhile get the conditions of the next task.
+%% 	{TaskId2, _Status2} = finish_task(Context, TaskId1),
+%% 	GSPid0 ! {msg, #msg_Task{taskId = TaskId1, taskState = ?TASKSTATE_COMPLETE}},
+%% 	% announcer_p ! {self(), report, UserId, fin_task1},
+%% 
+%% 	ok = accept_task(Context, TaskId2),
+%% 	GsId2 = get_map_table(Context, TaskId2),
+%% 	ok = jump_to_task(Context, TaskId2, GsId2),
+%% 
+%% 	GSPid0 ! quit,
+%% 	io:format("~p: wait quitAck~n", [UserId]),
+%% 	wait({GSPid0, quitAck}),
+%% 	io:format("~p: after quitAck~n", [UserId]),
+%% 
+%% 	GameServer2 = get_game_server(Context),
 	ParentPid = self(),
-	io:format("~p: ParentPid = ~p~n", [UserId, ParentPid]),
+	_Status2 = 0,
+	TaskId2 = 3,
+	GameServer2 = {"172.16.8.210", 10001},
 	
-	%% todo: kill this process and its inner player process when needed
-	GSPid0 = spawn(
-		fun() ->
-			io:format("~p: spawning cli:player~n", [UserId]),
-			cli:player_msg(ParentPid, GameServer0, SId, UserId)
-		end),
-	io:format("~p: GSPid0 = ~p~n", [UserId, GSPid0]),
-	PlayerId0 = wait_player_id(GSPid0),
-	io:format("~p: player0 id = ~p~n", [UserId, PlayerId0]),
-	PlayerLoc0 = wait_player_loc(GSPid0),
-	io:format("~p: player0 loc = ~p~n", [UserId, PlayerLoc0]),
-	
-	task0(GSPid0, Context, TaskId0, PlayerId0),
-	io:format("~p: task0 finished~n", [UserId]),
-
-	{TaskId1, _} = finish_task(Context, TaskId0),
-	io:format("~p: task1 is known:~p~n", [UserId, TaskId1]),
-	GSPid0 ! {msg, #msg_Task{taskId = TaskId0, taskState = ?TASKSTATE_COMPLETE}},
-	% announcer_p ! {self(), report, UserId, fin_task0},
-
-	io:format("~p: pre accept task id:~p~n", [UserId, TaskId1]),
-	ok = accept_task(Context, TaskId1),
-	GSPid0 ! {msg, #msg_Task{taskId = TaskId1, taskState = ?TASKSTATE_TAKEN}},
-	task1(GSPid0, Context, TaskId1, PlayerId0),
-	io:format("~p: task1 finished~n", [UserId]),
-
-	%% finish the second task, meanwhile get the conditions of the next task.
-	{TaskId2, _Status2} = finish_task(Context, TaskId1),
-	GSPid0 ! {msg, #msg_Task{taskId = TaskId1, taskState = ?TASKSTATE_COMPLETE}},
-	% announcer_p ! {self(), report, UserId, fin_task1},
-
-	ok = accept_task(Context, TaskId2),
-	GsId2 = get_map_table(Context, TaskId2),
-	ok = jump_to_task(Context, TaskId2, GsId2),
-
-	GSPid0 ! quit,
-	io:format("~p: wait quitAck~n", [UserId]),
-	wait({GSPid0, quitAck}),
-	io:format("~p: after quitAck~n", [UserId]),
-
-	GameServer2 = get_game_server(Context),
 	{Host2, Port2} = GameServer2,
 	io:format("~p: got game server2 location: host = ~p, port = ~p~n", [UserId, Host2, Port2]),
 	timer:sleep(2000),
